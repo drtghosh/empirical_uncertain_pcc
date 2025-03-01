@@ -27,6 +27,11 @@ def make_dirs(dir_paths):
         make_dir(dir_paths)
 
 
+def get_config(phase):
+    config = Config(phase)
+    return config
+
+
 class Config(object):
     """
         Base class of Config, provides necessary hyperparameters.
@@ -44,7 +49,7 @@ class Config(object):
             self.__setattr__(k, v)
 
         # creating experiment paths
-        self.exp_dir = os.path.join(self.log_dir, self.exp_name, self.module)
+        self.exp_dir = os.path.join(self.proj_dir, self.exp_name, self.module)
         if phase == "train" and args.cont is not True and os.path.exists(self.exp_dir):
             response = input('Experiment log/model already exists, overwrite to retrain? (y/n) ')
             if response != 'y':
@@ -54,14 +59,6 @@ class Config(object):
         self.log_dir = os.path.join(self.exp_dir, 'log')
         self.model_dir = os.path.join(self.exp_dir, 'model')
         make_dirs([self.log_dir, self.model_dir])
-
-        # GPU usage
-        if args.gpu_ids is not None:
-            os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_ids)
-
-        # create soft link to experiment log directory
-        # if not os.path.exists('train_log'):
-        #     os.symlink(self.exp_dir, 'train_log')
 
         # save this configuration
         if self.is_train:
@@ -103,7 +100,7 @@ class Config(object):
         """
         group = parser.add_argument_group('basic')
         group.add_argument('-x', '--exp_name', type=str, help="Tag of experiment", required=True)
-        group.add_argument('-l', '--log_dir', type=str, default="log",
+        group.add_argument('-l', '--proj_dir', type=str, default="proj_logger",
                            help="Path to directory where experiment logs/models will be saved")
         group.add_argument('-d', '--device', type=str, default='cuda:0', help='Device for training/ inference')
         group.add_argument('-m', '--module', type=str, choices=['ae', 'imle'], required=True,
