@@ -46,6 +46,9 @@ class TrainerCommon(object):
         self.log_dir = config.log_dir
         self.model_dir = config.model_dir
 
+        # device
+        self.device = config.device
+
         # watcher
         self.watcher = TrainWatcher()
 
@@ -67,6 +70,12 @@ class TrainerCommon(object):
         # set lr scheduler
         self.scheduler = None
         self.set_scheduler(config)
+
+        # store predicted points
+        self.predicted_pts = None
+
+        # store loss values
+        self.loss = None
 
         # set tensorboard writer
         self.train_tbw = SummaryWriter(os.path.join(self.log_dir, 'train.events'))
@@ -203,7 +212,7 @@ class TrainerCommon(object):
         losses = self.collect_loss()
         self.record_losses(losses, 'validation')
 
-    def visualize_batch(self, data, tb, **kwargs):
+    def visualize_batch(self, data, tbw, num, **kwargs):
         """
             write visualization results to tensorboard writer
         """
