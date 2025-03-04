@@ -115,6 +115,7 @@ class Config(object):
         group.add_argument('-n', '--dataset_name', type=str, choices=['BuildingPCC'], required=True,
                            help="Dataset to be used")
         group.add_argument('-r', '--data_root', type=str, default="", help="Path to corresponding data")
+        group.add_argument('-f', '--data_file', type=str, default="", help="Name of file containing data split info")
         group.add_argument('-b', '--batch_size', type=int, default=8, help="Batch size for data loader")
         group.add_argument('-c', '--category', type=str, default="all", help="Shape category name")
         group.add_argument('-w', '--num_workers', type=int, default=8, help="Number of workers for data loader")

@@ -15,9 +15,9 @@ def get_dataloader_buildingpcc(split, config):
     is_shuffle = (split == 'train')
 
     if config.module == "gen" or config.module == 'imle_gen':
-        dataset = BuildingPCCGen(split, config.data_root, config.data_raw_root, config.category, config.n_pts)
+        dataset = BuildingPCCGen(split, config.data_root, config.data_file, config.n_pts)
     elif config.module == "ae" or config.module == "vae":
-        dataset = BuildingPCCAE(split, config.data_root, config.category, config.n_pts)
+        dataset = BuildingPCCAE(split, config.data_root, config.data_file, config.n_pts)
     else:
         raise ValueError
     dataloader = DataLoader(dataset, batch_size=config.batch_size, shuffle=is_shuffle, num_workers=config.num_workers,
