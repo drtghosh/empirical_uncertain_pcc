@@ -1,6 +1,40 @@
-import numpy
+import numpy as np
 from chainer.backends import cuda
 import torch
+import laspy as lp
+import open3d as o3d
+
+
+def read_point_cloud_ply(path):
+    pc = o3d.io.read_point_cloud(path)
+    return np.array(pc.points, np.float32)
+
+
+def read_point_cloud_las(path):
+    pc = lp.read(path)
+    return np.array(pc.xyz, np.float32)
+
+
+def add_noise_pc(pc, sigma=0.01):
+    n = pc.shape[0]
+    for p in range(n):
+        pc[p][0] += sigma * np.random.randn()
+        pc[p][1] += sigma * np.random.randn()
+        pc[p][2] += sigma * np.random.randn()
+
+    return pc
+
+def random_sample(pc, n):
+    idx = np.random.permutation(pc.shape[0])
+    if pc.shape[0] < n:
+        idx = np.concatenate([idx, np.random.randint(pc.shape[0], size=n - pc.shape[0])])
+    return pc[idx[:n]]
+
+
+def cycle(iterable):
+    while True:
+        for x in iterable:
+            yield x
 
 
 def l2_norm(x, y):
@@ -14,8 +48,8 @@ def l2_norm(x, y):
 
 
 def farthest_point_sampling(pts, k, initial_idx=None, metrics=l2_norm,
-                            skip_initial=False, indices_dtype=numpy.int32,
-                            distances_dtype=numpy.float32):
+                            skip_initial=False, indices_dtype=np.int32,
+                            distances_dtype=np.float32):
     """Batch operation of farthest point sampling
     Code referenced from below link by @Graipher
     https://codereview.stackexchange.com/questions/179561/farthest-point-algorithm-in-python
@@ -41,7 +75,7 @@ def farthest_point_sampling(pts, k, initial_idx=None, metrics=l2_norm,
             (batch_size, k, num_point)
     """
 
-    pts = pts[numpy.newaxis, :, :]
+    pts = pts[np.newaxis, :, :]
 
     ndim = pts.shape[2]
     if ndim == 2:

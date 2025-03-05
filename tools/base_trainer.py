@@ -15,11 +15,11 @@ class TrainWatcher(object):
         self.minibatch = 0
         self.step = 0
 
-    def _within_epoch(self):
+    def within_epoch(self):
         self.minibatch += 1
         self.step += 1
 
-    def _new_epoch(self):
+    def new_epoch(self):
         self.epoch += 1
         self.minibatch = 0
 

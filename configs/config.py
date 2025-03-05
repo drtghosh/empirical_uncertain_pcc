@@ -103,7 +103,7 @@ class Config(object):
         group.add_argument('-l', '--proj_dir', type=str, default="proj_logger",
                            help="Path to directory where experiment logs/models will be saved")
         group.add_argument('-d', '--device', type=str, default='cuda:0', help='Device for training/ inference')
-        group.add_argument('-m', '--module', type=str, choices=['ae', 'imle'], required=True,
+        group.add_argument('-m', '--module', type=str, choices=['ae', 'vae', 'c_gan', 'imle_gen'], required=True,
                            help="Choice of the model to be used")
 
     @staticmethod
@@ -112,7 +112,7 @@ class Config(object):
         adds hyperparameters for dataset configuration
         """
         group = parser.add_argument_group('dataset')
-        group.add_argument('-n', '--dataset_name', type=str, choices=['BuildingPCC'], required=True,
+        group.add_argument('-n', '--dataset_name', type=str, choices=['buildingpcc', 'pcn'], required=True,
                            help="Dataset to be used")
         group.add_argument('-r', '--data_root', type=str, default="", help="Path to corresponding data")
         group.add_argument('-f', '--data_file', type=str, default="", help="Name of file containing data split info")

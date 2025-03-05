@@ -17,8 +17,8 @@ class TrainerAE(TrainerCommon):
         self.criterion = emd()
 
     def forward(self, data, train=True):
-        input_pts = data['points'].to(self.device)
-        encoded_input_pts = data['points_encoded'].to(self.device)
+        input_pts = data["points"].to(self.device)
+        encoded_input_pts = data["points_encoded"].to(self.device)
         target_pts = input_pts.clone().detach()
 
         self.predicted_pts = self.model(encoded_input_pts)
