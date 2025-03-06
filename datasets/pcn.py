@@ -25,8 +25,12 @@ def get_dataloader_pcn(split, config):
     return dataloader
 
 
-def split_data(path):
+def split_data_by_id(path, category):
     split_info = {"train": list(), 'validation': list(), 'test': list()}
+    with open(os.path.join(path, 'train.list'), 'r') as f:
+        lines_train = f.read().splitlines()
+    if category != 'all':
+        lines_train = list(filter(lambda x: x.startswith(cat2id[category]), lines_train))
     with open(path, 'r') as f:
         data_dict = json.loads(f.read())[0]
         split_info["train"] = data_dict["train"]

@@ -24,6 +24,7 @@ def add_noise_pc(pc, sigma=0.01):
 
     return pc
 
+
 def random_sample(pc, n):
     idx = np.random.permutation(pc.shape[0])
     if pc.shape[0] < n:
