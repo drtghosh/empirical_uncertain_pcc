@@ -1,5 +1,4 @@
 import os
-import json
 import random
 
 import torch
@@ -8,35 +7,21 @@ from torch.utils.data import Dataset, DataLoader
 
 from data_utils import farthest_point_sampling as fps
 from data_utils import positional_encoding, add_noise_pc, random_sample
-from data_utils import read_point_cloud_las, read_point_cloud_ply
+from data_utils import read_point_cloud_ply
 
 
 def get_dataloader_pcn(split, config):
     is_shuffle = (split == 'train')
 
     if config.module == "c_gan" or config.module == 'imle_gen':
-        dataset = PCNGen(split, config.data_root, config.data_file, config.n_pts)
+        dataset = PCNGen(split, config.data_root, config.category, 'complete', 'partial', config.n_pts)
     elif config.module == "ae" or config.module == "vae":
-        dataset = PCNAE(split, config.data_root, config.data_file, config.n_pts)
+        dataset = PCNAE(split, config.data_root, config.category, 'complete', config.n_pts)
     else:
         raise ValueError
     dataloader = DataLoader(dataset, batch_size=config.batch_size, shuffle=is_shuffle, num_workers=config.num_workers,
                             worker_init_fn=np.random.seed())
     return dataloader
-
-
-def split_data_by_id(path, category):
-    split_info = {"train": list(), 'validation': list(), 'test': list()}
-    with open(os.path.join(path, 'train.list'), 'r') as f:
-        lines_train = f.read().splitlines()
-    if category != 'all':
-        lines_train = list(filter(lambda x: x.startswith(cat2id[category]), lines_train))
-    with open(path, 'r') as f:
-        data_dict = json.loads(f.read())[0]
-        split_info["train"] = data_dict["train"]
-        split_info["validation"] = data_dict["val"]
-        split_info["test"] = data_dict["test"]
-    return split_info
 
 
 cat2id = {
@@ -69,15 +54,51 @@ cat2id = {
 }
 
 
+def split_data_by_cat(path, category):
+    split_info = {"train": list(), "validation": list(), "test": list(), "test_novel": list()}
+
+    # read all the list files
+    with open(os.path.join(path, 'train.list'), 'r') as ftr:
+        lines_train = ftr.read().splitlines()
+    with open(os.path.join(path, 'valid.list'), 'r') as fv:
+        lines_valid = fv.read().splitlines()
+    with open(os.path.join(path, 'test.list'), 'r') as fts:
+        lines_test = fts.read().splitlines()
+    with open(os.path.join(path, 'test_novel.list'), 'r') as fn:
+        lines_novel = fn.read().splitlines()
+
+    # filter according to the category
+    if category != 'all':
+        cat_id = cat2id[category]
+        lines_train = list(filter(lambda x: x.startswith(cat_id), lines_train))
+        lines_valid = list(filter(lambda x: x.startswith(cat_id), lines_valid))
+        lines_test = list(filter(lambda x: x.startswith(cat_id), lines_test))
+        lines_novel = list(filter(lambda x: x.startswith(cat_id), lines_novel))
+
+    for line in lines_train:
+        cat_id, name = line.split('/')
+        split_info["train"].append([cat_id, name])
+    for line in lines_valid:
+        cat_id, name = line.split('/')
+        split_info["validation"].append([cat_id, name])
+    for line in lines_test:
+        cat_id, name = line.split('/')
+        split_info["test"].append([cat_id, name])
+    for line in lines_novel:
+        cat_id, name = line.split('/')
+        split_info["test_novel"].append([cat_id, name])
+
+    return split_info
+
+
 class PCNAE(Dataset):
-    def __init__(self, split, data_root, data_file, gt_path, n_pts):
+    def __init__(self, split, data_root, category, gt_path, n_pts):
         super(PCNAE, self).__init__()
         self.split = split
         # self.shuffle = (split == "train")
         self.data_root = data_root
-        self.data_file = data_file
-        self.gt_path = os.path.join(data_root, gt_path)
-        self.data_names, self.data_paths = self._load_data()
+        self.gt_path = os.path.join(data_root, split, gt_path)
+        self.data_names, self.data_paths = self._load_data(category)
         self.n_pts = n_pts
 
     def __getitem__(self, index):
@@ -89,14 +110,14 @@ class PCNAE(Dataset):
         pc = torch.tensor(pc, dtype=torch.float32)
         enc_pc = positional_encoding(pc).transpose(1, 0)
         pc = pc.transpose(1, 0)
-        return {"id": self.data_names[index], "points": pc, "points_encoded": enc_pc}
+        return {"id": "/".join(self.data_names[index]), "points": pc, "points_encoded": enc_pc}
 
-    def _load_data(self):
-        split_dict = split_data(os.path.join(self.data_root, self.data_file))
+    def _load_data(self, category):
+        split_dict = split_data_by_cat(self.data_root, category)
         split_names = split_dict[self.split]
         split_paths = list()
         for name in split_names:
-            ply_path = os.path.join(self.gt_path, name + '.ply')
+            ply_path = os.path.join(self.gt_path, name[0], name[1] + '.ply')
             if os.path.exists(ply_path):
                 split_paths.append(ply_path)
 
@@ -107,24 +128,23 @@ class PCNAE(Dataset):
 
 
 class PCNGen(Dataset):
-    def __init__(self, split, data_root, data_file, gt_path, partial_path, n_pts):
+    def __init__(self, split, data_root, category, gt_path, partial_path, n_pts):
         super(PCNGen, self).__init__()
         self.split = split
         # self.shuffle = (split == "train")
         self.data_root = data_root
-        self.data_file = data_file
-        self.gt_path = os.path.join(data_root, gt_path)
-        self.partial_path = os.path.join(data_root, partial_path)
-        self.data_names, self.gt_paths, self.partial_paths = self._load_data()
+        self.gt_path = os.path.join(data_root, split, gt_path)
+        self.partial_path = os.path.join(data_root, split, partial_path)
+        self.data_names, self.gt_paths, self.partial_paths = self._load_data(category)
         self.n_pts = n_pts
         self.partial_pts = n_pts // 2
         self.rng = random.Random(1234)
 
     def __getitem__(self, index):
         # read partial cloud
-        render_choice = self.rng.randint(0, 1)
+        render_choice = self.rng.randint(0, 7)
         partial_path = self.partial_paths[index].format(render_choice)
-        partial_pc = read_point_cloud_las(partial_path)
+        partial_pc = read_point_cloud_ply(partial_path)
         # modify partial cloud
         partial_pc = add_noise_pc(partial_pc)
         partial_pc = random_sample(partial_pc, self.partial_pts)
@@ -137,20 +157,23 @@ class PCNGen(Dataset):
         pc = random_sample(pc, self.n_pts)
 
         pc = torch.tensor(pc, dtype=torch.float32).transpose(1, 0)
-        return {"id": self.data_names[index], "gt_points": pc, "partial_id": render_choice,
+        return {"id": "/".join(self.data_names[index]), "gt_points": pc, "partial_id": render_choice,
                 "partial_points": partial_pc}
 
-    def _load_data(self):
-        split_dict = split_data(os.path.join(self.data_root, self.data_file))
+    def _load_data(self, category):
+        split_dict = split_data_by_cat(self.data_root, category)
         split_names = split_dict[self.split]
         gt_paths = list()
         partial_paths = list()
         for name in split_names:
-            gt_ply_path = os.path.join(self.gt_path, name + '.ply')
-            partial_las_path = os.path.join(self.partial_path, name, '0{}.las')
-            if os.path.exists(gt_ply_path) and os.path.exists(partial_las_path):
+            gt_ply_path = os.path.join(self.gt_path, name[0], name[1] + '.ply')
+            if self.split == 'train':
+                partial_ply_path = os.path.join(self.partial_path, name[0], name[1] + '_{}.ply')
+            else:
+                partial_ply_path = os.path.join(self.partial_path, name[0], name[1] + '.ply')
+            if os.path.exists(gt_ply_path) and os.path.exists(partial_ply_path):
                 gt_paths.append(gt_ply_path)
-                partial_paths.append(partial_las_path)
+                partial_paths.append(partial_ply_path)
 
         return split_names, gt_paths, partial_paths
 
