@@ -60,7 +60,7 @@ def split_data_by_cat(path, category):
     # read all the list files
     with open(os.path.join(path, 'train.list'), 'r') as ftr:
         lines_train = ftr.read().splitlines()
-    with open(os.path.join(path, 'valid.list'), 'r') as fv:
+    with open(os.path.join(path, 'validation.list'), 'r') as fv:
         lines_valid = fv.read().splitlines()
     with open(os.path.join(path, 'test.list'), 'r') as fts:
         lines_test = fts.read().splitlines()

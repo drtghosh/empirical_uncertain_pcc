@@ -1,6 +1,7 @@
 import numpy as np
 from chainer.backends import cuda
 import torch
+import h5py
 import laspy as lp
 import open3d as o3d
 
@@ -13,6 +14,15 @@ def read_point_cloud_ply(path):
 def read_point_cloud_las(path):
     pc = lp.read(path)
     return np.array(pc.xyz, np.float32)
+
+
+def read_point_cloud_npy(path):
+    return np.load(path)
+
+
+def read_point_cloud_h5(path):
+    f = h5py.File(path, 'r')
+    return f['data'][()]
 
 
 def add_noise_pc(pc, sigma=0.01):

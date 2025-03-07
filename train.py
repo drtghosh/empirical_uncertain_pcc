@@ -6,10 +6,17 @@ from datasets.data_utils import cycle
 from tqdm import tqdm
 from collections import OrderedDict
 
+import wandb
+
 
 def train_model():
     # create experiment config containing all hyperparameters
     config = get_config('train')
+
+    # weights and biases
+    wandb.login(key='808f5ae6de6f014806ca1c9b374cdbae14787c5e')
+    wandb.init()
+    wandb.config.update(config)
 
     # create model and trainer
     trainer = get_trainer(config)
@@ -26,8 +33,13 @@ def train_model():
     # start training watcher
     watcher = trainer.watcher
 
+    # weights and biases watch
+    wandb.watch(trainer.model)
+
+
     for e in range(watcher.epoch, config.num_epochs):
         # begin iteration
+        total_loss = 0.0
         pbar = tqdm(train_loader)
         for b, data in enumerate(pbar):
             # train step
@@ -40,6 +52,8 @@ def train_model():
             pbar.set_description("EPOCH[{}][{}]".format(e, b))
             losses = trainer.collect_loss()
             pbar.set_postfix(OrderedDict({k: v.item() for k, v in losses.items()}))
+            for _, v in losses.items():
+                total_loss += v.item()
 
             # validation step
             if watcher.step % config.val_frequency == 0:
@@ -53,6 +67,7 @@ def train_model():
 
         trainer.update_learning_rate()
         watcher.new_epoch()
+        wandb.log({'epoch': e, 'total_loss': total_loss})
 
         if watcher.epoch % config.save_frequency == 0:
             trainer.save_ckpt()
