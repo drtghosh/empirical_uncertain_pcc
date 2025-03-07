@@ -1,0 +1,11 @@
+python train.py -l proj_log_ae \
+                -x buildingpcc_ae \
+                -m ae \
+                -n buildingpcc \
+                -r data/BuildingPCC \
+                -f BuildingPCC.json \
+                -b 200 \
+                --lr 5e-4 \
+                --save_frequency 500 \
+                -e 2000 \
+		            --vis

@@ -4,9 +4,9 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
 
-from data_utils import farthest_point_sampling as fps
-from data_utils import positional_encoding, add_noise_pc, random_sample
-from data_utils import read_point_cloud_h5
+from .data_utils import farthest_point_sampling as fps
+from .data_utils import positional_encoding, add_noise_pc, random_sample
+from .data_utils import read_point_cloud_h5
 
 
 def get_dataloader_pcn(split, config):

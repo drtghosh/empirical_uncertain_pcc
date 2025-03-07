@@ -1,5 +1,6 @@
 from datasets.buildingpcc import get_dataloader_buildingpcc
 from datasets.pcn import get_dataloader_pcn
+from datasets.data_utils import *
 
 
 def get_dataloader(split, config):

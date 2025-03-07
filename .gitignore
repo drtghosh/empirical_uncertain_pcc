@@ -1,2 +1,4 @@
 external
 data
+proj_log_ae
+wandb

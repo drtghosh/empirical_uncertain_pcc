@@ -128,9 +128,11 @@ class Config(object):
         """
         group = parser.add_argument_group('model')
         # ae encoder
-        self.enc_filters = (64, 128, 128, 256)
+        self.enc_features = (64, 128, 128, 256)
+        self.res_layers = (2,)
         group.add_argument('--latent_dim', type=int, default=128)
         group.add_argument('--enc_norm', type=bool, default=True)
+        group.add_argument('--space_dim', type=int, default=3)
 
         # ae decoder
         self.dec_features = (256, 256)
