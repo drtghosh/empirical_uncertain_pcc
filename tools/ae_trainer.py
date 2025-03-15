@@ -6,7 +6,7 @@ from metrics.EMD import emd
 
 class TrainerAE(TrainerCommon):
     def build_model(self, config):
-        # customize the build_model function
+        # customize the build_model function to build the autoencoder
         model = get_model(config, "pointAE")
         # print('#####-----pointAE architecture-----######')
         # print(model)

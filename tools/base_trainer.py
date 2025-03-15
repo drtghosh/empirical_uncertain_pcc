@@ -89,7 +89,7 @@ class TrainerCommon(object):
         """
             set loss function used in training
         """
-        self.criterion = nn.MSELoss().cuda()
+        self.criterion = nn.MSELoss().to(self.device)
 
     @abstractmethod
     def collect_loss(self):
@@ -134,7 +134,7 @@ class TrainerCommon(object):
             'scheduler_state_dict': self.scheduler.state_dict(),
         }, save_path)
 
-        self.model.cuda()
+        self.model.to(self.device)
 
     def load_ckpt(self, epoch, name=None):
         """

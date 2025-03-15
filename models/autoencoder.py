@@ -84,7 +84,8 @@ class DecoderFC(nn.Module):
 			if idx < len(n_features):
 				activation_layer = nn.LeakyReLU(inplace=True)
 				model.append(activation_layer)
-				prev_nf = nf
+
+			prev_nf = nf
 
 		self.model = nn.Sequential(*model)
 
