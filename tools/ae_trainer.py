@@ -23,7 +23,7 @@ class TrainerAE(TrainerCommon):
 
         self.predicted_pts = self.model(encoded_input_pts)
         if train:
-            self.loss = torch.mean(self.criterion(self.predicted_pts, target_pts))
+            self.loss = torch.mean(self.criterion(self.predicted_pts, target_pts, 0.05, 3000))
 
     def collect_loss(self):
         loss_dict = {"emd": self.loss}

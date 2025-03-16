@@ -36,7 +36,6 @@ def train_model():
     # weights and biases watch
     wandb.watch(trainer.model)
 
-
     for e in range(watcher.epoch, config.num_epochs):
         # begin iteration
         total_loss = 0.0
