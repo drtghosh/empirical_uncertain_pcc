@@ -30,7 +30,7 @@ def split_data(path):
     with open(path, 'r') as f:
         data_dict = json.loads(f.read())[0]
         split_info["train"] = data_dict["train"]
-        split_info["validation"] = data_dict["val"]
+        split_info["validation"] = data_dict["validation"]
         split_info["test"] = data_dict["test"]
     return split_info
 

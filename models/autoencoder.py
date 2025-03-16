@@ -41,7 +41,7 @@ class EncoderPC(nn.Module):
 
 	def forward(self, pc):
 		batch_size, partial_num, _ = pc.shape  # B, N, _ = batch_size, partial_num, _
-		x = pc.transpose(2, 1)
+		x = pc # pc.transpose(2, 1)
 		for idx, nf in enumerate(self.n_features):
 			if idx in self.residual_layers:
 				global_feature = torch.max(x, dim=2, keepdim=True)[0]
