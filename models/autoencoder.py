@@ -48,7 +48,7 @@ class EncoderPC(nn.Module):
 			if idx in self.residual_layers:
 				global_feature = torch.max(x, dim=2, keepdim=True)[0]
 				print(global_feature.shape)
-				_, _, feature_size = x.shape
+				_, feature_size, _ = x.shape
 				print(feature_size)
 				x = torch.cat([global_feature.expand(-1, feature_size, -1), x], dim=1)
 			if self.normalize:
