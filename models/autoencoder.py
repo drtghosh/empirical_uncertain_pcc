@@ -47,10 +47,7 @@ class EncoderPC(nn.Module):
 		for idx, nf in enumerate(self.n_features):
 			if idx in self.residual_layers:
 				global_feature = torch.max(x, dim=2, keepdim=True)[0]
-				print(global_feature.shape)
-				_, feature_size, _ = x.shape
-				print(feature_size)
-				x = torch.cat([global_feature.expand(-1, feature_size, -1), x], dim=1)
+				x = torch.cat([global_feature.expand(-1, -1, partial_num), x], dim=1)
 			if self.normalize:
 				x = self.model[3*idx + 2](self.model[3*idx + 1](self.model[3*idx](x)))
 			else:
