@@ -42,12 +42,12 @@ class EncoderPC(nn.Module):
 		self.model = nn.Sequential(*model)
 
 	def forward(self, pc):
-		batch_size, partial_num, _ = pc.shape  # B, N, _ = batch_size, partial_num, _
-		x = pc # pc.transpose(2, 1)
+		batch_size, _, partial_num = pc.shape  # B, _, N = batch_size, _, partial_num
+		x = pc  # pc.transpose(2, 1)
 		for idx, nf in enumerate(self.n_features):
 			if idx in self.residual_layers:
 				global_feature = torch.max(x, dim=2, keepdim=True)[0]
-				x = torch.cat([global_feature.expand(-1, -1, partial_num), x], dim=1)
+				x = torch.cat([global_feature.expand(-1, partial_num, -1), x], dim=1)
 			if self.normalize:
 				x = self.model[3*idx + 2](self.model[3*idx + 1](self.model[3*idx](x)))
 			else:
