@@ -22,7 +22,9 @@ class EncoderPC(nn.Module):
 		assert self.residual_layers[-1] < len(n_features), "global feature should not be concatenated in the final layer"
 
 		model = []
-		prev_nf = space_dim
+		# fix positional encoding size here
+		pos_enc = 6
+		prev_nf = space_dim + (pos_enc * pos_enc)
 		for idx, nf in enumerate(self.n_features):
 			if idx in self.residual_layers:
 				prev_nf = 2 * prev_nf
