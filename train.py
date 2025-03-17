@@ -66,6 +66,7 @@ def train_model():
 
         trainer.update_learning_rate()
         watcher.new_epoch()
+        total_loss /= len(pbar)
         wandb.log({'epoch': e, 'total_loss': total_loss})
 
         if watcher.epoch % config.save_frequency == 0:
