@@ -19,13 +19,11 @@ class TrainerAE(TrainerCommon):
     def forward(self, data, train=True):
         input_pts = data["points"].to(self.device)
         encoded_input_pts = data["points_encoded"].to(self.device)
-        target_pts = input_pts.clone().detach()
+        target_pts = input_pts.clone().transpose(1, 2)
 
         self.predicted_pts = self.model(encoded_input_pts)
         if train:
-            print(self.predicted_pts.shape)
-            print(target_pts.shape)
-            emd_dis, assignment = self.criterion(self.predicted_pts, target_pts, 0.05, 3000)
+            emd_dis, assignment = self.criterion(self.predicted_pts.transpose(1, 2), target_pts, 0.05, 3000)
             self.loss = torch.mean(torch.sqrt(emd_dis))
 
     def collect_loss(self):
