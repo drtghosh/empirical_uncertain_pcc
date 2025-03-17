@@ -2,6 +2,7 @@ import torch
 from models import get_model, set_requires_grad
 from tools.base_trainer import TrainerCommon
 from torch.distributions import normal
+from dciknn_cuda import DCI
 
 
 class TrainerIMLE(TrainerCommon):
@@ -14,6 +15,7 @@ class TrainerIMLE(TrainerCommon):
         self.z_samples_train = config.gen_samples_train
         self.z_samples_test = config.gen_samples_test
         self.z_sampler = normal.Normal(0, 1)
+        self.dci_db = DCI(128, 2, 10, 100, 10)
 
     def build_model(self, config):
         # load pretrained pointAE
