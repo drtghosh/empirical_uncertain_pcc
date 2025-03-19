@@ -138,6 +138,13 @@ class Config(object):
         self.dec_features = (256, 256)
         group.add_argument('--dec_norm', type=bool, default=False)
 
+        # generator
+        self.n_features_gen = (256, 512)
+        group.add_argument('--noise_dim', type=int, default=8)
+        group.add_argument('--gen_norm', type=bool, default=False)
+        group.add_argument('--latent_gen_weight', type=float, default=5.0)
+        group.add_argument('--recon_weight', type=float, default=6.0)
+
     @staticmethod
     def _add_training_config_(parser):
         """

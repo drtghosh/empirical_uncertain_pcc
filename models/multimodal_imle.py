@@ -13,23 +13,23 @@ def weights_init(m):
 
 
 class Generator(nn.Module):
-	def __init__(self, n_features=(256, 512), latent_dim=128, noise_dim=8, normalize=False):
+	def __init__(self, config):
 		super(Generator, self).__init__()
-		self.n_features = list(n_features) + [latent_dim]
-		self.latent_dim = latent_dim
-		self.noise_dim = noise_dim
+		self.n_features = list(config.n_features_gen) + [config.latent_dim]
+		self.latent_dim = config.latent_dim
+		self.noise_dim = config.noise_dim
 
 		model = []
-		prev_nf = latent_dim + noise_dim
+		prev_nf = config.latent_dim + config.noise_dim
 		for idx, nf in enumerate(self.n_features):
 			fc_layer = nn.Linear(prev_nf, nf)
 			model.append(fc_layer)
 
-			if normalize:
+			if config.gen_norm:
 				norm_layer = nn.BatchNorm1d(nf)
 				model.append(norm_layer)
 
-			if idx < len(n_features):
+			if idx < len(config.n_features_gen):
 				activation_layer = nn.LeakyReLU(inplace=True)
 				model.append(activation_layer)
 

@@ -1,5 +1,6 @@
 from models.autoencoder import PointAE
 from models.multimodal_imle import Generator
+from models.model_utils import gen_nearest_latents
 
 
 def get_model(config, name):
