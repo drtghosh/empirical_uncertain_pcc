@@ -145,7 +145,7 @@ class Config(object):
         group.add_argument('--gen_norm', type=bool, default=False)
         group.add_argument('--latent_gen_weight', type=float, default=5.0)
         group.add_argument('--recon_weight', type=float, default=6.0)
-        group.add_argument('--en_samples_train', type=int, default=4)
+        group.add_argument('--gen_samples_train', type=int, default=20)
 
     @staticmethod
     def _add_training_config_(parser):

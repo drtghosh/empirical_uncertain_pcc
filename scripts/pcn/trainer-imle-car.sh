@@ -4,7 +4,7 @@ python train.py -l proj_log_imle \
                 -n pcn \
                 -r data/PCN \
                 -c car \
-                -b 5 \
+                -b 10 \
                 -a proj_log_ae/pcn_car_ae/ae/model/ckpt_epoch100.pth \
                 --lr 5e-4 \
                 --save_frequency 10 \
