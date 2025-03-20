@@ -239,7 +239,7 @@ class TrainerCommonMulti(object):
         self.batch_size = config.batch_size
 
         # build network
-        self.generator = self.build_model(config)
+        self.model = self.build_model(config)
 
         # set loss function
         self.criterionMSE = nn.MSELoss().to(self.device)
@@ -285,7 +285,7 @@ class TrainerCommonMulti(object):
             set optimizer used in training
         """
         self.base_lr = config.lr
-        self.optimizer_gen = optim.Adam(self.generator.parameters(), config.lr, betas=(config.beta1_gen, 0.999))
+        self.optimizer_gen = optim.Adam(self.model.parameters(), config.lr, betas=(config.beta1_gen, 0.999))
 
     def save_ckpt(self, name=None):
         """
@@ -297,10 +297,10 @@ class TrainerCommonMulti(object):
         else:
             save_path = os.path.join(self.model_dir, "{}.pth".format(name))
 
-        if isinstance(self.generator, nn.DataParallel):
-            model_state_dict = self.generator.module.cpu().state_dict()
+        if isinstance(self.model, nn.DataParallel):
+            model_state_dict = self.model.module.cpu().state_dict()
         else:
-            model_state_dict = self.generator.cpu().state_dict()
+            model_state_dict = self.model.cpu().state_dict()
 
         torch.save({
             'watcher': self.watcher.make_checkpoint(),
@@ -308,7 +308,7 @@ class TrainerCommonMulti(object):
             'optimizer_gen_state_dict': self.optimizer_gen.state_dict(),
         }, save_path)
 
-        self.generator.to(self.device)
+        self.model.to(self.device)
 
     def load_ckpt(self, epoch, name=None):
         """
@@ -321,7 +321,7 @@ class TrainerCommonMulti(object):
 
         checkpoint = torch.load(load_path)
         print("Loading checkpoint from {} ...".format(load_path))
-        self.generator.load_state_dict(checkpoint['generator_state_dict'])
+        self.model.load_state_dict(checkpoint['generator_state_dict'])
         self.optimizer_gen.load_state_dict(checkpoint['optimizer_gen_state_dict'])
         self.watcher.restore_checkpoint(checkpoint['watcher'])
 
@@ -358,7 +358,7 @@ class TrainerCommonMulti(object):
         """
             one step of training
         """
-        self.generator.train()
+        self.model.train()
         self.forward(data)
 
         losses = self.collect_loss()
@@ -369,7 +369,7 @@ class TrainerCommonMulti(object):
         """
             one step of validation
         """
-        self.generator.eval()
+        self.model.eval()
 
         with torch.no_grad():
             self.forward(data)
@@ -404,7 +404,7 @@ class TrainerContrastive(object):
         self.batch_size = config.batch_size
 
         # build network
-        self.generator = self.build_model(config)
+        self.model = self.build_model(config)
 
         # set loss function
         self.criterionContrast = None
@@ -447,7 +447,7 @@ class TrainerContrastive(object):
             set optimizer used in training
         """
         self.base_lr = config.lr
-        self.optimizer_gen = optim.Adam(self.generator.parameters(), config.lr, betas=(config.beta1_gen, 0.999))
+        self.optimizer_gen = optim.Adam(self.model.parameters(), config.lr, betas=(config.beta1_gen, 0.999))
 
     def save_ckpt(self, name=None):
         """
@@ -459,10 +459,10 @@ class TrainerContrastive(object):
         else:
             save_path = os.path.join(self.model_dir, "{}.pth".format(name))
 
-        if isinstance(self.generator, nn.DataParallel):
-            model_state_dict = self.generator.module.cpu().state_dict()
+        if isinstance(self.model, nn.DataParallel):
+            model_state_dict = self.model.module.cpu().state_dict()
         else:
-            model_state_dict = self.generator.cpu().state_dict()
+            model_state_dict = self.model.cpu().state_dict()
 
         torch.save({
             'watcher': self.watcher.make_checkpoint(),
@@ -470,7 +470,7 @@ class TrainerContrastive(object):
             'optimizer_gen_state_dict': self.optimizer_gen.state_dict(),
         }, save_path)
 
-        self.generator.to(self.device)
+        self.model.to(self.device)
 
     def load_ckpt(self, epoch, name=None):
         """
@@ -483,7 +483,7 @@ class TrainerContrastive(object):
 
         checkpoint = torch.load(load_path)
         print("Loading checkpoint from {} ...".format(load_path))
-        self.generator.load_state_dict(checkpoint['generator_state_dict'])
+        self.model.load_state_dict(checkpoint['generator_state_dict'])
         self.optimizer_gen.load_state_dict(checkpoint['optimizer_gen_state_dict'])
         self.watcher.restore_checkpoint(checkpoint['watcher'])
 
@@ -520,7 +520,7 @@ class TrainerContrastive(object):
         """
             one step of training
         """
-        self.generator.train()
+        self.model.train()
         self.forward(data)
 
         losses = self.collect_loss()
@@ -531,7 +531,7 @@ class TrainerContrastive(object):
         """
             one step of validation
         """
-        self.generator.eval()
+        self.model.eval()
 
         with torch.no_grad():
             self.forward(data)

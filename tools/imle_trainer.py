@@ -37,8 +37,8 @@ class TrainerIMLE(TrainerCommonMulti):
         set_requires_grad(self.pointAE, False)
 
         # customize the build_model function to build generator
-        generator = get_model(config, "Gen").to(self.device)
-        return generator
+        model = get_model(config, "Gen").to(self.device)
+        return model
 
     def set_loss_function(self):
         self.criterionLatent = self.criterionMSE
@@ -56,7 +56,7 @@ class TrainerIMLE(TrainerCommonMulti):
 
         for idx in range(z_samples):
             z_random = self.z_sampler.sample([partial_latent.size(0), self.z_dim]).to(self.device)
-            latent_gen = self.generator(partial_latent, z_random)
+            latent_gen = self.model(partial_latent, z_random)
             latent_gen_list.append(latent_gen)
 
         latent_gen_list = torch.stack(latent_gen_list, 1)
