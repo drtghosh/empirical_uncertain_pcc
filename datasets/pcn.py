@@ -167,7 +167,6 @@ class PCNGen(Dataset):
     def _load_data(self, category):
         split_dict = split_data_by_cat(self.data_root, category)
         split_names = split_dict[self.split]
-        data_names = list()
         gt_paths = list()
         partial_paths = list()
         for name in split_names:
@@ -176,13 +175,11 @@ class PCNGen(Dataset):
                 partial_ply_path = os.path.join(self.partial_path, name[0], name[1] + '_{}.ply')
             else:
                 partial_ply_path = os.path.join(self.partial_path, name[0], name[1] + '.ply')
-            if os.path.exists(gt_ply_path) and os.path.exists(partial_ply_path):
-                print('abracadabra')
-                data_names.append(name)
-                gt_paths.append(gt_ply_path)
-                partial_paths.append(partial_ply_path)
+            # if os.path.exists(gt_ply_path) and os.path.exists(partial_ply_path):
+            gt_paths.append(gt_ply_path)
+            partial_paths.append(partial_ply_path)
 
-        return data_names, gt_paths, partial_paths
+        return split_names, gt_paths, partial_paths
 
     def __len__(self):
         return len(self.data_names)
