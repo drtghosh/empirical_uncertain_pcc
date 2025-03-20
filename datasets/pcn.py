@@ -152,7 +152,8 @@ class PCNGen(Dataset):
         # modify partial cloud
         partial_pc = add_noise_pc(partial_pc)
         partial_pc = random_sample(partial_pc, self.partial_pts)
-        partial_pc = torch.tensor(partial_pc, dtype=torch.float32).transpose(1, 0)
+        partial_pc = torch.tensor(partial_pc, dtype=torch.float32)  # .transpose(1, 0)
+        partial_pc = positional_encoding(partial_pc).transpose(1, 0)
 
         # read ground truth cloud
         gt_path = self.gt_paths[index]
@@ -160,7 +161,8 @@ class PCNGen(Dataset):
         # sample from ground truth cloud
         pc = random_sample(pc, self.n_pts)
 
-        pc = torch.tensor(pc, dtype=torch.float32).transpose(1, 0)
+        pc = torch.tensor(pc, dtype=torch.float32)  # .transpose(1, 0)
+        pc = positional_encoding(pc).transpose(1, 0)
         return {"id": "/".join(self.data_names[index]), "gt_points": pc, "partial_id": render_choice,
                 "partial_points": partial_pc}
 
