@@ -141,6 +141,12 @@ class PCNGen(Dataset):
         self.rng = random.Random(1234)
 
     def __getitem__(self, index):
+        # read ground truth cloud
+        gt_path = self.gt_paths[index]
+        pc = read_point_cloud_ply(gt_path)
+        # sample from ground truth cloud
+        pc = random_sample(pc, self.n_pts)
+        
         # read partial cloud
         render_choice = self.rng.randint(0, 7)
         partial_path = self.partial_paths[index].format(render_choice)
@@ -149,12 +155,6 @@ class PCNGen(Dataset):
         partial_pc = add_noise_pc(partial_pc)
         partial_pc = random_sample(partial_pc, self.partial_pts)
         partial_pc = torch.tensor(partial_pc, dtype=torch.float32).transpose(1, 0)
-
-        # read ground truth cloud
-        gt_path = self.gt_paths[index]
-        pc = read_point_cloud_ply(gt_path)
-        # sample from ground truth cloud
-        pc = random_sample(pc, self.n_pts)
 
         pc = torch.tensor(pc, dtype=torch.float32).transpose(1, 0)
         return {"id": "/".join(self.data_names[index]), "gt_points": pc, "partial_id": render_choice,
