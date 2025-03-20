@@ -64,15 +64,15 @@ class TrainerIMLE(TrainerCommonMulti):
         self.gen_pc = self.pointAE.decode(latent_gen_nearest)
 
         # compute loss
-        self.latent_gen_loss = self.criterionLatent(latent_gen_nearest, complete_latent)
-        self.reconstruction_loss = ldf(partial_pc, self.gen_pc)
-        self.loss = self.latent_gen_weight * self.latent_gen_loss + self.recon_weight * self.reconstruction_loss
+        self.latent_gen_loss = self.latent_gen_weight * self.criterionLatent(latent_gen_nearest, complete_latent)
+        self.reconstruction_loss = self.recon_weight * ldf(partial_pc, self.gen_pc)
+        self.loss = self.latent_gen_loss + self.reconstruction_loss
 
     def collect_loss(self):
         loss_dict = {
             "imle": self.latent_gen_loss,
-            "part_recon": self.reconstruction_loss,
-            "combined_loss": self.loss}
+            "part_recon": self.reconstruction_loss
+            }
         return loss_dict
 
     def update_generator(self):

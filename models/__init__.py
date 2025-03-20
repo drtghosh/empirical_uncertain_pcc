@@ -1,5 +1,6 @@
 from models.autoencoder import PointAE
 from models.multimodal_imle import Generator
+from models.generic_models import MLPBlock
 from models.model_utils import gen_nearest_latents
 
 
@@ -8,6 +9,8 @@ def get_model(config, name):
         return PointAE(config)
     if name == "Gen":
         return Generator(config)
+    if name == "blockMLP":
+        return MLPBlock(config)
     else:
         raise NotImplementedError("Got name '{}'".format(name))
 

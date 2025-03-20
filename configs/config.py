@@ -103,8 +103,8 @@ class Config(object):
         group.add_argument('-l', '--proj_dir', type=str, default="proj_logger",
                            help="Path to directory where experiment logs/models will be saved")
         group.add_argument('-d', '--device', type=str, default='cuda:0', help='Device for training/ inference')
-        group.add_argument('-m', '--module', type=str, choices=['ae', 'vae', 'c_gan', 'imle_gen'], required=True,
-                           help="Choice of the model to be used")
+        group.add_argument('-m', '--module', type=str, choices=['ae', 'vae', 'c_gan', 'imle_gen', 'contrast_ae'],
+                           required=True, help="Choice of the model to be used")
 
     @staticmethod
     def _add_dataset_config_(parser):
@@ -140,10 +140,12 @@ class Config(object):
 
         # generator
         self.n_features_gen = (256, 512)
-        group.add_argument('--noise_dim', type=int, default=8)
+        group.add_argument('-a', '--path_pretrained_ae', type=str)
+        group.add_argument('--noise_dim', type=int, default=32)
         group.add_argument('--gen_norm', type=bool, default=False)
         group.add_argument('--latent_gen_weight', type=float, default=5.0)
         group.add_argument('--recon_weight', type=float, default=6.0)
+        group.add_argument('--en_samples_train', type=int, default=4)
 
     @staticmethod
     def _add_training_config_(parser):
@@ -169,7 +171,7 @@ class Config(object):
         """
         group = parser.add_argument_group('testing')
         group.add_argument('--num_sample', type=int, default=10, help="Number test samples to use, -1 for all")
-        group.add_argument('--num_z', type=int, default=5, help="Number of completion outputs per sample")
+        group.add_argument('--gen_samples_test', type=int, default=5, help="Number of completion outputs per sample")
 
 
 if __name__ == '__main__':
