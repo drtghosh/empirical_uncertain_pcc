@@ -132,21 +132,15 @@ class PCNGen(Dataset):
         super(PCNGen, self).__init__()
         self.split = split
         # self.shuffle = (split == "train")
+        self.rng = random.Random(1234)
         self.data_root = data_root
         self.gt_path = os.path.join(data_root, split, gt_path)
         self.partial_path = os.path.join(data_root, split, partial_path)
         self.data_names, self.gt_paths, self.partial_paths = self._load_data(category)
         self.n_pts = n_pts
         self.partial_pts = n_pts // 2
-        self.rng = random.Random(1234)
 
     def __getitem__(self, index):
-        # read ground truth cloud
-        gt_path = self.gt_paths[index]
-        pc = read_point_cloud_ply(gt_path)
-        # sample from ground truth cloud
-        pc = random_sample(pc, self.n_pts)
-        
         # read partial cloud
         render_choice = self.rng.randint(0, 7)
         partial_path = self.partial_paths[index].format(render_choice)
@@ -156,6 +150,12 @@ class PCNGen(Dataset):
         partial_pc = random_sample(partial_pc, self.partial_pts)
         partial_pc = torch.tensor(partial_pc, dtype=torch.float32).transpose(1, 0)
 
+        # read ground truth cloud
+        gt_path = self.gt_paths[index]
+        pc = read_point_cloud_ply(gt_path)
+        # sample from ground truth cloud
+        pc = random_sample(pc, self.n_pts)
+
         pc = torch.tensor(pc, dtype=torch.float32).transpose(1, 0)
         return {"id": "/".join(self.data_names[index]), "gt_points": pc, "partial_id": render_choice,
                 "partial_points": partial_pc}
@@ -163,6 +163,7 @@ class PCNGen(Dataset):
     def _load_data(self, category):
         split_dict = split_data_by_cat(self.data_root, category)
         split_names = split_dict[self.split]
+        data_names = list()
         gt_paths = list()
         partial_paths = list()
         for name in split_names:
@@ -172,10 +173,11 @@ class PCNGen(Dataset):
             else:
                 partial_ply_path = os.path.join(self.partial_path, name[0], name[1] + '.ply')
             if os.path.exists(gt_ply_path) and os.path.exists(partial_ply_path):
+                data_names.append(name)
                 gt_paths.append(gt_ply_path)
                 partial_paths.append(partial_ply_path)
 
-        return split_names, gt_paths, partial_paths
+        return data_names, gt_paths, partial_paths
 
     def __len__(self):
         return len(self.data_names)
