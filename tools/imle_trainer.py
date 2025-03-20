@@ -9,7 +9,6 @@ from metrics import ldf
 class TrainerIMLE(TrainerCommonMulti):
     def __init__(self, config):
         super(TrainerIMLE, self).__init__(config)
-        self.pointAE = None
         self.latent_gen_loss = None
         self.reconstruction_loss = None
         self.recon_weight = config.recon_weight
