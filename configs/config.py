@@ -156,6 +156,7 @@ class Config(object):
         group.add_argument('-e', '--num_epochs', type=int, default=1000, help="Epochs of training")
         group.add_argument('--lr', type=float, default=5e-4, help="Initial learning rate")
         group.add_argument('--lr_decay', type=float, default=0.9995, help="Step size for learning rate decay")
+        group.add_argument('--beta1_gen', type=float, default=0.5, help="beta1 for Adam when training generator")
         group.add_argument('--continue', dest='cont', action='store_true', help="Continue training from checkpoint")
         group.add_argument('--ckpt', type=str, default='latest', required=False, help="Desired checkpoint to restore")
         group.add_argument('--vis', action='store_true', default=False, help="Visualize output in tensorboard")
