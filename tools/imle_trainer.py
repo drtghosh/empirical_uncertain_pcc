@@ -17,7 +17,7 @@ class TrainerIMLE(TrainerCommonMulti):
         self.z_dim = config.noise_dim
         self.z_samples_train = config.gen_samples_train
         self.z_samples_test = None
-        if config.is_train:
+        if not config.is_train:
             self.z_samples_test = config.gen_samples_test
         self.z_sampler = normal.Normal(0, 1)
         # dci_db = DCI(dim, num_comp_indices, num_simp_indices, block_size, thread_size, devices=[0, 1])
