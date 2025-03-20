@@ -142,8 +142,12 @@ class PCNGen(Dataset):
 
     def __getitem__(self, index):
         # read partial cloud
-        render_choice = self.rng.randint(0, 7)
-        partial_path = self.partial_paths[index].format(render_choice)
+        render_choice = 0
+        if self.split == 'train':
+            render_choice = self.rng.randint(0, 7)
+            partial_path = self.partial_paths[index].format(render_choice)
+        else:
+            partial_path = self.partial_paths[index]
         partial_pc = read_point_cloud_ply(partial_path)
         # modify partial cloud
         partial_pc = add_noise_pc(partial_pc)
@@ -173,6 +177,7 @@ class PCNGen(Dataset):
             else:
                 partial_ply_path = os.path.join(self.partial_path, name[0], name[1] + '.ply')
             if os.path.exists(gt_ply_path) and os.path.exists(partial_ply_path):
+                print('abracadabra')
                 data_names.append(name)
                 gt_paths.append(gt_ply_path)
                 partial_paths.append(partial_ply_path)
