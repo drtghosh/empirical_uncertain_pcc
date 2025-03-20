@@ -44,11 +44,13 @@ class TrainerIMLE(TrainerCommonMulti):
 
     def forward(self, data, train=True):
         partial_pc = data['partial_points'].to(self.device)
-        complete_pc = data['gt_points'].to(self.device)
+        partial_enc = data['partial_encoded'].to(self.device)
+        # complete_pc = data['gt_points'].to(self.device)
+        complete_enc = data['gt_encoded'].to(self.device)
 
         with torch.no_grad():
-            partial_latent = self.pointAE.encode(partial_pc)
-            complete_latent = self.pointAE.encode(complete_pc)
+            partial_latent = self.pointAE.encode(partial_enc)
+            complete_latent = self.pointAE.encode(complete_enc)
         z_samples = self.z_samples_train if train else self.z_samples_test
 
         latent_gen_list = []
