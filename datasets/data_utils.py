@@ -226,7 +226,7 @@ def save_negative_complete_pcn(data_root, split, category, cat2id, use_normal=Fa
         new_pc = o3d.geometry.PointCloud()
         new_pc.points = o3d.utility.Vector3dVector(new_points)
         # noinspection PyTypeChecker
-        negative_cat_path = os.path.join(data_root, split, 'negative', cat2id)
+        negative_cat_path = os.path.join(data_root, split, 'negative', cat_id)
         if not os.path.exists(negative_cat_path):
             os.makedirs(negative_cat_path)
         o3d.io.write_point_cloud(os.path.join(data_root, split, 'negative', line + '.ply'), new_pc)
