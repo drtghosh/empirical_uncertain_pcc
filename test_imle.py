@@ -47,13 +47,14 @@ def test_imle_gen():
         if not os.path.exists(pc_dir):
             os.makedirs(pc_dir)
         # save the partial point cloud to results
-        write_point_cloud_ply(trainer.partial_pc[0].transpose(1, 0), os.path.join(pc_dir, 'partial.ply'))
+        write_point_cloud_ply(trainer.partial_pc[0].transpose(1, 0).cpu().numpy(), os.path.join(pc_dir, 'partial.ply'))
         # save the complete point cloud to results
-        write_point_cloud_ply(trainer.complete_pc[0].transpose(1, 0), os.path.join(pc_dir, 'complete.ply'))
+        write_point_cloud_ply(trainer.complete_pc[0].transpose(1, 0).cpu().numpy(),
+                              os.path.join(pc_dir, 'complete.ply'))
         # save the generated point clouds to results
         for j in range(len(trainer.latent_gen_list)):
             latent = trainer.latent_gen_list[j]
-            gen_pc = trainer.pointAE.decode(latent)[0].transpose(1, 0)
+            gen_pc = trainer.pointAE.decode(latent)[0].transpose(1, 0).cpu().numpy()
             write_point_cloud_ply(gen_pc, os.path.join(pc_dir, f'gen_{j}.ply'))
 
 
