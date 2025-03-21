@@ -44,7 +44,7 @@ def test_imle_gen():
             trainer.forward(data, False)
         partial_pc = trainer.partial_pc[0].transpose(1, 0)
         complete_pc = trainer.complete_pc[0].transpose(1, 0)
-        pc_dir = os.path.join(save_dir, trainer.data_id)
+        pc_dir = os.path.join(save_dir, trainer.data_id[0])
         if not os.path.exists(pc_dir):
             os.makedirs(pc_dir)
         # save the partial point cloud to results
