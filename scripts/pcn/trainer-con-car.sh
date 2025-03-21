@@ -1,4 +1,4 @@
-python train.py -l proj_log_com \
+python train.py -l proj_log_con \
                 -x pcn_car_con \
                 -m contrast_ae \
                 -n pcn \
