@@ -1,5 +1,5 @@
 python test_imle.py -l proj_log_imle \
-                    -x pcn_car_imle_test \
+                    -x pcn_car_imle \
                     -m imle_gen \
                     -n pcn \
                     -r data/PCN \
