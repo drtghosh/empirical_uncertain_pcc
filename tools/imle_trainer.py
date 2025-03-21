@@ -9,6 +9,9 @@ from metrics import ldf
 class TrainerIMLE(TrainerCommonMulti):
     def __init__(self, config):
         super(TrainerIMLE, self).__init__(config)
+        self.partial_pc = None
+        self.complete_pc = None
+        self.data_id = None
         self.latent_gen_loss = None
         self.reconstruction_loss = None
         self.recon_weight = config.recon_weight
@@ -19,6 +22,7 @@ class TrainerIMLE(TrainerCommonMulti):
         if not config.is_train:
             self.z_samples_test = config.gen_samples_test
         self.z_sampler = normal.Normal(0, 1)
+        self.latent_gen_list = []
         # dci_db = DCI(dim, num_comp_indices, num_simp_indices, block_size, thread_size, devices=[0, 1])
         self.dci_db = DCI(config.latent_dim, 2, 10, 100, 10)
         self.gen_pc = None
@@ -43,9 +47,10 @@ class TrainerIMLE(TrainerCommonMulti):
         self.criterionLatent = self.criterionMSE
 
     def forward(self, data, train=True):
-        partial_pc = data['partial_points'].to(self.device)
+        self.data_id = data['id']
+        self.partial_pc = data['partial_points'].to(self.device)
         partial_enc = data['partial_encoded'].to(self.device)
-        # complete_pc = data['gt_points'].to(self.device)
+        self.complete_pc = data['gt_points'].to(self.device)
         complete_enc = data['gt_encoded'].to(self.device)
 
         with torch.no_grad():
@@ -53,23 +58,26 @@ class TrainerIMLE(TrainerCommonMulti):
             complete_latent = self.pointAE.encode(complete_enc)
         z_samples = self.z_samples_train if train else self.z_samples_test
 
-        latent_gen_list = []
-
         for idx in range(z_samples):
             z_random = self.z_sampler.sample([partial_latent.size(0), self.z_dim]).to(self.device)
-            latent_gen = self.model(partial_latent, z_random)
-            latent_gen_list.append(latent_gen)
+            if train:
+                latent_gen = self.model(partial_latent, z_random)
+            else:
+                self.model.eval()
+                with torch.no_grad():
+                    latent_gen = self.model(partial_latent, z_random)
+            self.latent_gen_list.append(latent_gen)
 
-        latent_gen_list = torch.stack(latent_gen_list, 1)
+        if train:
+            latent_gen_list = torch.stack(self.latent_gen_list, 1)
+            # sample
+            latent_gen_nearest = gen_nearest_latents(self.dci_db, latent_gen_list, complete_latent)
+            self.gen_pc = self.pointAE.decode(latent_gen_nearest)
 
-        # sample
-        latent_gen_nearest = gen_nearest_latents(self.dci_db, latent_gen_list, complete_latent)
-        self.gen_pc = self.pointAE.decode(latent_gen_nearest)
-
-        # compute loss
-        self.latent_gen_loss = self.latent_gen_weight * self.criterionLatent(latent_gen_nearest, complete_latent)
-        self.reconstruction_loss = self.recon_weight * ldf(partial_pc, self.gen_pc)
-        self.loss = self.latent_gen_loss + self.reconstruction_loss
+            # compute loss
+            self.latent_gen_loss = self.latent_gen_weight * self.criterionLatent(latent_gen_nearest, complete_latent)
+            self.reconstruction_loss = self.recon_weight * ldf(self.partial_pc, self.gen_pc)
+            self.loss = self.latent_gen_loss + self.reconstruction_loss
 
     def collect_loss(self):
         loss_dict = {

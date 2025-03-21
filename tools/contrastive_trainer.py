@@ -38,6 +38,7 @@ class TrainerAEContrast(TrainerContrastive):
             partial_latent = partial_latent.view(partial_latent.size(0),partial_latent.size(1), 1)
 
         extended_anchor = torch.cat([partial_pc, partial_latent.expand(-1, -1, partial_pc.size(-1))], 1)
+        # extended_anchor = extended_anchor reshape
         idx_pair = torch.randperm(complete_pc.size(-1))
         subsample_idx_pair = idx_pair[:extended_anchor.size(-1)]
         sub_complete = complete_pc[:, :, subsample_idx_pair]
