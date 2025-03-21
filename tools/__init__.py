@@ -1,6 +1,6 @@
 from tools.ae_trainer import TrainerAE
 from tools.imle_trainer import TrainerIMLE
-# from tools.contrastive_trainer import TrainerAEContrast
+from tools.contrastive_trainer import TrainerAEContrast
 
 
 def get_trainer(config):
@@ -8,7 +8,7 @@ def get_trainer(config):
         return TrainerAE(config)
     elif config.module == 'imle_gen':
         return TrainerIMLE(config)
-    # elif config.module == 'contrast_ae':
-        # return TrainerAEContrast(config)
+    elif config.module == 'contrast_ae':
+        return TrainerAEContrast(config)
     else:
         raise ValueError
