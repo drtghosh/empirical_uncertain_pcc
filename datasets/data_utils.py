@@ -228,3 +228,12 @@ def save_negative_complete_pcn(data_root, split, category, cat2id, use_normal=Fa
         new_pc.points = o3d.utility.Vector3dVector(new_points)
         # noinspection PyTypeChecker
         o3d.io.write_point_cloud(os.path.join(data_root, split, 'negative', line + '.ply'), new_pc)
+
+
+id_dict = {
+    # seen categories
+    "airplane": "02691156",  # plane
+    "cabinet": "02933112",  # dresser
+    "car": "02958343"
+}
+save_negative_complete_pcn('data/PCN', 'train', 'car', id_dict, True)
