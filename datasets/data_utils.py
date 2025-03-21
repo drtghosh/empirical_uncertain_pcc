@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from chainer.backends import cuda
 import torch
@@ -175,3 +176,55 @@ def positional_encoding(tensor, encoding_size=6, include_input=True, log_samplin
         return encoding[0]
     else:
         return torch.cat(encoding, dim=-1)
+
+
+def create_negative_data(path):
+    point_cloud = o3d.io.read_point_cloud(path)
+    points = np.array(point_cloud.points)
+
+    mid = (np.max(points, 0) - np.min(points, 0)) / 2
+    avg_distance = np.mean(mid) * np.random.uniform(0.01, 0.2, (points.shape[0], 1))
+    noise = 0.01 * np.random.randn(points.shape[0], 2)
+
+    bias = np.concat((avg_distance, noise), axis=1)
+    bias_tensor = torch.tensor(bias)
+    indices = torch.argsort(torch.rand(*bias_tensor.shape), dim=-1)
+    bias_tensor = bias_tensor[torch.arange(bias_tensor.shape[0]).unsqueeze(-1), indices]
+    new_points = points + bias_tensor.numpy()
+
+    return new_points
+
+
+def create_negative_with_normal(path):
+    point_cloud = o3d.io.read_point_cloud(path)
+    point_cloud.estimate_normals()
+    points = np.array(point_cloud.points)
+    normals = np.array(point_cloud.normals)
+    negative_data = np.empty(points.shape)
+    random_distance = np.random.randn(len(points))
+    random_distance[np.abs(random_distance) < 0.01] = np.random.choice([-1, 1])
+    for p in range(len(normals)):
+        negative_data[p] = points[p] + random_distance[p] * normals[p]
+
+    return negative_data
+
+
+def save_negative_complete_pcn(data_root, split, category, cat2id, use_normal=False):
+    assert split in ['train', 'validation', 'test'], "split error value!"
+    with open(os.path.join(data_root, split + '.list'), 'r') as f:
+        lines = f.read().splitlines()
+
+    if category != 'all':
+        cat_id = cat2id[category]
+        lines = list(filter(lambda x: x.startswith(cat_id), lines))
+
+    for line in lines:
+        file_path = os.path.join(data_root, split, 'complete', line + '.ply')
+        if use_normal:
+            new_points = create_negative_with_normal(file_path)
+        else:
+            new_points = create_negative_data(file_path)
+        new_pc = o3d.geometry.PointCloud()
+        new_pc.points = o3d.utility.Vector3dVector(new_points)
+        # noinspection PyTypeChecker
+        o3d.io.write_point_cloud(os.path.join(data_root, split, 'negative', line + '.ply'), new_pc)
