@@ -19,7 +19,7 @@ def test_imle_gen():
 
     # load from checkpoint
     trainer.load_ckpt(config.ckpt)
-    trainer.eval()
+    trainer.model.eval()
 
     # create dataloader
     config.batch_size = 1

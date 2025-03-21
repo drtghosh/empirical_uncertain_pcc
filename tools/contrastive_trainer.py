@@ -38,14 +38,16 @@ class TrainerAEContrast(TrainerContrastive):
             partial_latent = partial_latent.view(partial_latent.size(0),partial_latent.size(1), 1)
 
         extended_anchor = torch.cat([partial_pc, partial_latent.expand(-1, -1, partial_pc.size(-1))], 1)
-        # extended_anchor = extended_anchor reshape
+        extended_anchor = extended_anchor.transpose(1, 2)
         idx_pair = torch.randperm(complete_pc.size(-1))
         subsample_idx_pair = idx_pair[:extended_anchor.size(-1)]
         sub_complete = complete_pc[:, :, subsample_idx_pair]
         sub_negative = negative_pc[:, :, subsample_idx_pair]
 
         extended_complete = torch.cat([sub_complete, partial_latent.expand(-1, -1, sub_complete.size(-1))], 1)
+        extended_complete = extended_complete.transpose(1, 2)
         extended_negative = torch.cat([sub_negative, partial_latent.expand(-1, -1, sub_negative.size(-1))], 1)
+        extended_negative = extended_negative.transpose(1, 2)
 
         anchor_embedding = self.model(extended_anchor).flatten(0, 1)
         positive_embedding = self.model(extended_complete).flatten(0, 1)
