@@ -1,7 +1,7 @@
-"""import torch
+import torch
 from models import get_model, set_requires_grad
 from tools.base_trainer import TrainerContrastive
-from metrics import Triplet
+from metrics import Triplet, lacc
 
 
 class TrainerAEContrast(TrainerContrastive):
@@ -30,14 +30,30 @@ class TrainerAEContrast(TrainerContrastive):
 
     def forward(self, data):
         partial_pc = data['partial_points'].to(self.device)
+        partial_enc = data['partial_encoded'].to(self.device)
         complete_pc = data['gt_points'].to(self.device)
+        negative_pc = data['negative_points'].to(self.device)
 
         with torch.no_grad():
-            partial_latent = self.pointAE.encode(partial_pc)
+            partial_latent = self.pointAE.encode(partial_enc)
 
-        extended_anchor = torch.cat([partial_pc, partial_latent.expand(-1, partial_pc.size(1), -1)], 2)
-        idx_pair = torch.randperm(complete_pc.size(1))
-        positive = subsample_idx_pair = idx_pair[:extended_anchor.size(-1)]
+        extended_anchor = torch.cat([partial_pc, partial_latent.expand(-1, -1, partial_pc.size(1))], 1)
+        idx_pair = torch.randperm(complete_pc.size(-1))
+        subsample_idx_pair = idx_pair[:extended_anchor.size(-1)]
+        sub_complete = complete_pc[:, :, subsample_idx_pair]
+        sub_negative = negative_pc[:, :, subsample_idx_pair]
 
-        conditioned_complete = torch.cat([complete_pc, partial_latent.expand(-1, complete_pc.size(1), -1)], 2)
-"""
+        extended_complete = torch.cat([sub_complete, partial_latent.expand(-1, -1, sub_complete.size(1))], 1)
+        extended_negative = torch.cat([sub_negative, partial_latent.expand(-1, -1, sub_negative.size(1))], 1)
+
+        anchor_embedding = self.model(extended_anchor).flatten(0, 1)
+        positive_embedding = self.model(extended_complete).flatten(0, 1)
+        negative_embedding = self.model(extended_negative).flatten(0, 1)
+        self.loss = lacc(anchor_embedding, positive_embedding, negative_embedding, self.loss_batch,
+                         self.criterionContrast)
+
+    def collect_loss(self):
+        loss_dict = {
+            "contrastive_loss": self.loss
+        }
+        return loss_dict

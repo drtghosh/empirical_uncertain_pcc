@@ -407,9 +407,10 @@ class TrainerContrastive(object):
         # build network
         self.model = self.build_model(config)
 
-        # set loss function
+        # set loss function and related stuff
         self.criterionContrast = None
         self.set_loss_function()
+        self.loss_batch = config.loss_batch
 
         # set optimizer
         self.base_lr = None
