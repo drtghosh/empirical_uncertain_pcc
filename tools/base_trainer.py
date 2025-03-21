@@ -414,7 +414,7 @@ class TrainerContrastive(object):
 
         # set optimizer
         self.base_lr = None
-        self.optimizer_gen = None
+        self.optimizer_con = None
         self.set_optimizer(config)
 
         # store predicted points
@@ -449,7 +449,7 @@ class TrainerContrastive(object):
             set optimizer used in training
         """
         self.base_lr = config.lr
-        self.optimizer_gen = optim.Adam(self.model.parameters(), config.lr, betas=(config.beta1_gen, 0.999))
+        self.optimizer_con = optim.Adam(self.model.parameters(), config.lr, betas=(config.beta1_con, 0.999))
 
     def save_ckpt(self, name=None):
         """
@@ -468,8 +468,8 @@ class TrainerContrastive(object):
 
         torch.save({
             'watcher': self.watcher.make_checkpoint(),
-            'generator_state_dict': model_state_dict,
-            'optimizer_gen_state_dict': self.optimizer_gen.state_dict(),
+            'con_state_dict': model_state_dict,
+            'optimizer_con_state_dict': self.optimizer_con.state_dict(),
         }, save_path)
 
         self.model.to(self.device)
@@ -485,8 +485,8 @@ class TrainerContrastive(object):
 
         checkpoint = torch.load(load_path)
         print("Loading checkpoint from {} ...".format(load_path))
-        self.model.load_state_dict(checkpoint['generator_state_dict'])
-        self.optimizer_gen.load_state_dict(checkpoint['optimizer_gen_state_dict'])
+        self.model.load_state_dict(checkpoint['con_state_dict'])
+        self.optimizer_con.load_state_dict(checkpoint['optimizer_con_state_dict'])
         self.watcher.restore_checkpoint(checkpoint['watcher'])
 
     @abstractmethod
@@ -496,17 +496,20 @@ class TrainerContrastive(object):
         """
         raise NotImplementedError
 
-    def update_generator(self):
+    def update_network(self, loss_dict):
         """
             update network by back propagation
         """
-        raise NotImplementedError
+        loss = sum(loss_dict.values())
+        self.optimizer_con.zero_grad()
+        loss.backward()
+        self.optimizer_con.step()
 
     def update_learning_rate(self):
         """
             record and update learning rate
         """
-        self.train_tbw.add_scalar('learning_rate', self.optimizer_gen.param_groups[-1]['lr'], self.watcher.epoch)
+        self.train_tbw.add_scalar('learning_rate', self.optimizer_con.param_groups[-1]['lr'], self.watcher.epoch)
 
     def record_losses(self, loss_dict, mode='train'):
         """
@@ -526,7 +529,7 @@ class TrainerContrastive(object):
         self.forward(data)
 
         losses = self.collect_loss()
-        self.update_generator()
+        self.update_network(losses)
         self.record_losses(losses, 'train')
 
     def val_func(self, data):
@@ -540,9 +543,3 @@ class TrainerContrastive(object):
 
         losses = self.collect_loss()
         self.record_losses(losses, 'validation')
-
-    def visualize_batch(self, data, tbw, num, **kwargs):
-        """
-            write visualization results to tensorboard writer
-        """
-        raise NotImplementedError

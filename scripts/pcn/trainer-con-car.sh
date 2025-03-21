@@ -1,0 +1,11 @@
+python train.py -l proj_log_com \
+                -x pcn_car_con \
+                -m contrast_ae \
+                -n pcn \
+                -r data/PCN \
+                -c car \
+                -b 10 \
+                -a proj_log_ae/pcn_car_ae/ae/model/ckpt_epoch100.pth \
+                --lr 1e-3 \
+                --save_frequency 10 \
+                -e 100
