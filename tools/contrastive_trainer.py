@@ -35,6 +35,7 @@ class TrainerAEContrast(TrainerContrastive):
 
         with torch.no_grad():
             partial_latent = self.pointAE.encode(partial_enc)
+            partial_latent = partial_latent.view(partial_latent.size(0),partial_latent.size(1), 1)
 
         extended_anchor = torch.cat([partial_pc, partial_latent.expand(-1, -1, partial_pc.size(-1))], 1)
         idx_pair = torch.randperm(complete_pc.size(-1))
