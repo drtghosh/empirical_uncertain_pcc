@@ -244,4 +244,4 @@ id_dict = {
     "cabinet": "02933112",  # dresser
     "car": "02958343"
 }
-# save_negative_complete_pcn('data/PCN', 'train', 'car', id_dict, True)
+save_negative_complete_pcn('data/PCN', 'validation', 'car', id_dict, True)
