@@ -12,6 +12,12 @@ def read_point_cloud_ply(path):
     return np.array(pc.points, np.float32)
 
 
+def write_point_cloud_ply(points, path):
+    pc = o3d.geometry.PointCloud()
+    pc.points = points
+    o3d.io.write_point_cloud(path, pc)
+
+
 def read_point_cloud_las(path):
     pc = lp.read(path)
     return np.array(pc.xyz, np.float32)

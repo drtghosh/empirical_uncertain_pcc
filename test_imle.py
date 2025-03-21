@@ -3,7 +3,7 @@ import torch
 from configs import get_config
 from tools import get_trainer
 from datasets import get_dataloader
-from datasets.data_utils import cycle
+from datasets.data_utils import cycle, write_point_cloud_ply
 
 import os
 import open3d as o3d
@@ -42,20 +42,19 @@ def test_imle_gen():
         data = next(test_loader)
         with torch.no_grad():
             trainer.forward(data, False)
-        partial_pc = trainer.partial_pc[0].transpose(1, 0)
-        complete_pc = trainer.complete_pc[0].transpose(1, 0)
+
         pc_dir = os.path.join(save_dir, trainer.data_id[0])
         if not os.path.exists(pc_dir):
             os.makedirs(pc_dir)
         # save the partial point cloud to results
-        o3d.io.write_point_cloud(os.path.join(pc_dir, 'partial.ply'), partial_pc)
+        write_point_cloud_ply(trainer.partial_pc[0].transpose(1, 0), os.path.join(pc_dir, 'partial.ply'))
         # save the complete point cloud to results
-        o3d.io.write_point_cloud(os.path.join(pc_dir, 'complete.ply'), complete_pc)
+        write_point_cloud_ply(trainer.complete_pc[0].transpose(1, 0), os.path.join(pc_dir, 'complete.ply'))
         # save the generated point clouds to results
         for j in range(len(trainer.latent_gen_list)):
             latent = trainer.latent_gen_list[j]
             gen_pc = trainer.pointAE.decode(latent)[0].transpose(1, 0)
-            o3d.io.write_point_cloud(os.path.join(pc_dir, f'gen_{j}.ply'), gen_pc)
+            write_point_cloud_ply(gen_pc, os.path.join(pc_dir, f'gen_{j}.ply'))
 
 
 if __name__ == '__main__':
