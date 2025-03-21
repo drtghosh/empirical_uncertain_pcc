@@ -6,7 +6,6 @@ from datasets import get_dataloader
 from datasets.data_utils import cycle, write_point_cloud_ply
 
 import os
-import open3d as o3d
 from tqdm import tqdm
 
 

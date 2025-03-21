@@ -14,7 +14,7 @@ def read_point_cloud_ply(path):
 
 def write_point_cloud_ply(points, path):
     pc = o3d.geometry.PointCloud()
-    pc.points = points
+    pc.points = o3d.utility.Vector3dVector(points)
     o3d.io.write_point_cloud(path, pc)
 
 
