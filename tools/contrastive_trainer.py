@@ -7,7 +7,6 @@ from metrics import Triplet, lacc
 class TrainerAEContrast(TrainerContrastive):
     def __init__(self, config):
         super(TrainerAEContrast, self).__init__(config)
-        self.pointAE = None
 
     def build_model(self, config):
         # load pretrained pointAE

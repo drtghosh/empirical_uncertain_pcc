@@ -405,6 +405,7 @@ class TrainerContrastive(object):
         self.batch_size = config.batch_size
 
         # build network
+        self.pointAE = None
         self.model = self.build_model(config)
 
         # set loss function and related stuff
