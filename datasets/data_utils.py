@@ -12,9 +12,15 @@ def read_point_cloud_ply(path):
     return np.array(pc.points, np.float32)
 
 
-def write_point_cloud_ply(points, path):
+def write_point_cloud_ply(points, path, with_color=False, colors=None):
+    if torch.is_tensor(points):
+        points = points.cpu().detach().numpy()
     pc = o3d.geometry.PointCloud()
     pc.points = o3d.utility.Vector3dVector(points)
+    if with_color:
+        if torch.is_tensor(colors):
+            colors = colors.cpu().detach().numpy()
+        pc.colors = o3d.utility.Vector3dVector(colors)
     o3d.io.write_point_cloud(path, pc)
 
 

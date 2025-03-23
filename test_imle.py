@@ -8,6 +8,9 @@ from datasets.data_utils import cycle, write_point_cloud_ply
 import os
 from tqdm import tqdm
 
+import numpy as np
+import cv2 as cv
+
 
 def test_imle_gen():
     # create experiment config containing all hyperparameters
@@ -51,10 +54,25 @@ def test_imle_gen():
         write_point_cloud_ply(trainer.complete_pc[0].transpose(1, 0).cpu().numpy(),
                               os.path.join(pc_dir, 'complete.ply'))
         # save the generated point clouds to results
-        for j in range(len(trainer.latent_gen_list)):
+        # store to estimate confidence
+        num_gen = len(trainer.latent_gen_list)
+        gen_clouds = torch.zeros(num_gen, trainer.partial_pc.size(-1), trainer.partial_pc.size(1))
+        for j in range(num_gen):
             latent = trainer.latent_gen_list[j]
-            gen_pc = trainer.pointAE.decode(latent)[0].transpose(1, 0).cpu().numpy()
+            gen_pc_tensor = trainer.pointAE.decode(latent)[0].transpose(1, 0)
+            gen_clouds[j] = gen_pc_tensor
+            gen_pc = gen_pc_tensor.cpu().numpy()
             write_point_cloud_ply(gen_pc, os.path.join(pc_dir, f'gen_{j}.ply'))
+        # estimate confidence
+        gen_mu = gen_clouds.mean(dim=0)
+        gen_std = gen_clouds.std(dim=0)
+        normalized_std = gen_std / gen_std.max()
+        intensity = torch.norm(normalized_std, dim=[1])
+        intensity = (intensity - intensity.min()) / (intensity.max() - intensity.min())
+        intensity = 255 - np.uint8(255 * intensity)
+        color_map = cv.applyColorMap(intensity, cv.COLORMAP_JET) / 255
+        color_map = np.squeeze(color_map)
+        write_point_cloud_ply(gen_mu, os.path.join(pc_dir, 'gen_conf.ply'), True, color_map)
 
 
 if __name__ == '__main__':
