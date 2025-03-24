@@ -37,7 +37,6 @@ class TrainerAEContrast(TrainerContrastive):
         self.partial_pc = data['partial_points'].to(self.device)
         partial_enc = data['partial_encoded'].to(self.device)
         self.complete_pc = data['gt_points'].to(self.device)
-        negative_pc = data['negative_points'].to(self.device)
 
         with torch.no_grad():
             partial_latent = self.pointAE.encode(partial_enc)
@@ -46,6 +45,7 @@ class TrainerAEContrast(TrainerContrastive):
         extended_anchor = torch.cat([self.partial_pc, partial_latent.expand(-1, -1, self.partial_pc.size(-1))], 1)
         extended_anchor = extended_anchor.transpose(1, 2)
         if train:
+            negative_pc = data['negative_points'].to(self.device)
             anchor_embedding = self.model(extended_anchor).flatten(0, 1)
             idx_pair = torch.randperm(self.complete_pc.size(-1))
             subsample_idx_pair = idx_pair[:extended_anchor.size(1)]
