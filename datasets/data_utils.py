@@ -292,7 +292,7 @@ def plot_pcd_one_view(filename, pcds, titles, suptitle='', sizes=None, colors=No
     selected_gen = np.concatenate(([0, 1], selected_gen, [len(pcds) - 1]))
     pcds = [pcds[i] for i in selected_gen]
     titles = np.array(titles)[selected_gen]
-    colors = np.array(colors)[selected_gen]
+    colors = [colors[i] for i in selected_gen]
     if sizes is None:
         sizes = [0.5] * len(pcds)
     fig = plt.figure(figsize=(len(pcds) * 3 * 1.4, 3 * 1.4))
