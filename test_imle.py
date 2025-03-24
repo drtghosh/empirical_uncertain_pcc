@@ -52,19 +52,19 @@ def test_imle_gen():
         # store all point clouds
         point_cloud_list = []
         titles = []
-        cmaps = []
+        colors = []
 
         # save the partial point cloud to results
         write_point_cloud_ply(trainer.partial_pc[0].transpose(1, 0).cpu().numpy(), os.path.join(pc_dir, 'partial.ply'))
         point_cloud_list.append(trainer.partial_pc[0].transpose(1, 0).cpu().numpy())
         titles.append('Partial Cloud')
-        cmaps.append('red')
+        colors.append('red')
         # save the complete point cloud to results
         write_point_cloud_ply(trainer.complete_pc[0].transpose(1, 0).cpu().numpy(),
                               os.path.join(pc_dir, 'complete.ply'))
         point_cloud_list.append(trainer.complete_pc[0].transpose(1, 0).cpu().numpy())
         titles.append('Complete Cloud')
-        cmaps.append('green')
+        colors.append('green')
         # save the generated point clouds to results
         # store to estimate confidence
         num_gen = len(trainer.latent_gen_list)
@@ -77,7 +77,7 @@ def test_imle_gen():
             write_point_cloud_ply(gen_pc, os.path.join(pc_dir, f'gen_{j}.ply'))
             point_cloud_list.append(gen_pc)
             titles.append(f'Generated Cloud {j}')
-            cmaps.append('blue')
+            colors.append('blue')
         # estimate confidence
         gen_mu = gen_clouds.mean(dim=0)
         gen_std = gen_clouds.std(dim=0)
@@ -90,8 +90,8 @@ def test_imle_gen():
         write_point_cloud_ply(gen_mu, os.path.join(pc_dir, 'gen_conf.ply'), True, color_map)
         point_cloud_list.append(gen_mu.cpu().numpy())
         titles.append('Averaged Cloud')
-        cmaps.append(color_map)
-        plot_pcd_one_view(os.path.join(pc_dir, 'all.jpg'), point_cloud_list, titles, cmaps=cmaps)
+        colors.append(color_map)
+        plot_pcd_one_view(os.path.join(pc_dir, 'all.jpg'), point_cloud_list, titles, colors=colors)
 
 
 if __name__ == '__main__':

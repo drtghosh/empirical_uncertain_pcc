@@ -286,8 +286,13 @@ def create_negative_with_label(point_cloud, distance=1):
     return negative_data, negative_label
 
 
-def plot_pcd_one_view(filename, pcds, titles, suptitle='', sizes=None, cmaps=None, zdir='y', xlim=(-0.5, 0.5),
+def plot_pcd_one_view(filename, pcds, titles, suptitle='', sizes=None, colors=None, zdir='y', xlim=(-0.5, 0.5),
                       ylim=(-0.5, 0.5), zlim=(-0.5, 0.5)):
+    selected_gen = np.random.randint(2, len(pcds)-2, 3)
+    selected_gen = np.concatenate(([0, 1], selected_gen, [len(pcds) - 1]))
+    pcds = pcds[selected_gen]
+    titles = titles[selected_gen]
+    colors = colors[selected_gen]
     if sizes is None:
         sizes = [0.5] * len(pcds)
     fig = plt.figure(figsize=(len(pcds) * 3 * 1.4, 3 * 1.4))
@@ -297,7 +302,7 @@ def plot_pcd_one_view(filename, pcds, titles, suptitle='', sizes=None, cmaps=Non
         # color = pcd[:, 0]
         ax = fig.add_subplot(1, len(pcds), j + 1, projection='3d')
         ax.view_init(elev, azim)
-        ax.scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], zdir=zdir, c=cmaps[j], s=size, vmin=-1.0, vmax=0.5)
+        ax.scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], zdir=zdir, c=colors[j], s=size, cmap='viridis', vmin=-1.0, vmax=0.5)
         ax.set_title(titles[j])
         ax.set_axis_off()
         ax.set_xlim(xlim)
