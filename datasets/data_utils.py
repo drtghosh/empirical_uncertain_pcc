@@ -251,3 +251,35 @@ id_dict = {
     "car": "02958343"
 }
 # save_negative_complete_pcn('data/PCN', 'validation', 'car', id_dict, True)
+
+
+def create_grid(test_data, grid_size, space_dim=3, box_min=None, box_max=None, eps=0.2):
+    # create array of grid sizes
+    grid_sizes = np.ones(space_dim, dtype=np.int32) * grid_size
+    # find the bounding box for all dataset
+    if box_min is None:
+        box_min = torch.amin(test_data, 1)[0] - eps
+    if box_max is None:
+        box_max = torch.amax(test_data, 1)[0] + eps
+
+    # Build a grid (dimension-agnostic)
+    grid_vertices = np.meshgrid(
+        *[np.linspace(box_min[d], box_max[d], grid_sizes[d]) for d in range(space_dim)])
+    grid_vertices = np.stack(grid_vertices, axis=-1).reshape(-1, space_dim)
+    grid_vertices = torch.tensor(grid_vertices, dtype=torch.float32)
+    return grid_vertices.unsqueeze(0), grid_sizes
+
+
+def create_negative_with_label(point_cloud, distance=1):
+    if len(point_cloud.size()) > 2:
+        point_cloud = point_cloud[0]
+    point_cloud.estimate_normals()
+    points = np.array(point_cloud.points)
+    normals = np.array(point_cloud.normals)
+    negative_data = np.empty(points.shape)
+    random_distance = distance * np.random.randn(len(points))
+    for p in range(len(normals)):
+        negative_data[p] = points[p] + random_distance[p] * normals[p]
+    negative_data = torch.tensor(negative_data, dtype=torch.float32).unsqueeze(0)
+    negative_label = torch.tensor(random_distance, dtype=torch.float32)
+    return negative_data, negative_label

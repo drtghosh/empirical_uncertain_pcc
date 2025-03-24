@@ -7,6 +7,11 @@ from metrics import Triplet, lacc
 class TrainerAEContrast(TrainerContrastive):
     def __init__(self, config):
         super(TrainerAEContrast, self).__init__(config)
+        self.partial_pc = None
+        self.complete_pc = None
+        self.data_id = None
+        self.partial_embedding = None
+        self.test_latent = None
 
     def build_model(self, config):
         # load pretrained pointAE
@@ -27,33 +32,40 @@ class TrainerAEContrast(TrainerContrastive):
     def set_loss_function(self):
         self.criterionContrast = Triplet()
 
-    def forward(self, data):
-        partial_pc = data['partial_points'].to(self.device)
+    def forward(self, data, train=True):
+        self.data_id = data['id']
+        self.partial_pc = data['partial_points'].to(self.device)
         partial_enc = data['partial_encoded'].to(self.device)
-        complete_pc = data['gt_points'].to(self.device)
+        self.complete_pc = data['gt_points'].to(self.device)
         negative_pc = data['negative_points'].to(self.device)
 
         with torch.no_grad():
             partial_latent = self.pointAE.encode(partial_enc)
             partial_latent = partial_latent.view(partial_latent.size(0),partial_latent.size(1), 1)
 
-        extended_anchor = torch.cat([partial_pc, partial_latent.expand(-1, -1, partial_pc.size(-1))], 1)
+        extended_anchor = torch.cat([self.partial_pc, partial_latent.expand(-1, -1, self.partial_pc.size(-1))], 1)
         extended_anchor = extended_anchor.transpose(1, 2)
-        idx_pair = torch.randperm(complete_pc.size(-1))
-        subsample_idx_pair = idx_pair[:extended_anchor.size(1)]
-        sub_complete = complete_pc[:, :, subsample_idx_pair]
-        sub_negative = negative_pc[:, :, subsample_idx_pair]
+        if train:
+            anchor_embedding = self.model(extended_anchor).flatten(0, 1)
+            idx_pair = torch.randperm(self.complete_pc.size(-1))
+            subsample_idx_pair = idx_pair[:extended_anchor.size(1)]
+            sub_complete = self.complete_pc[:, :, subsample_idx_pair]
+            sub_negative = negative_pc[:, :, subsample_idx_pair]
 
-        extended_complete = torch.cat([sub_complete, partial_latent.expand(-1, -1, sub_complete.size(-1))], 1)
-        extended_complete = extended_complete.transpose(1, 2)
-        extended_negative = torch.cat([sub_negative, partial_latent.expand(-1, -1, sub_negative.size(-1))], 1)
-        extended_negative = extended_negative.transpose(1, 2)
+            extended_complete = torch.cat([sub_complete, partial_latent.expand(-1, -1, sub_complete.size(-1))], 1)
+            extended_complete = extended_complete.transpose(1, 2)
+            extended_negative = torch.cat([sub_negative, partial_latent.expand(-1, -1, sub_negative.size(-1))], 1)
+            extended_negative = extended_negative.transpose(1, 2)
 
-        anchor_embedding = self.model(extended_anchor).flatten(0, 1)
-        positive_embedding = self.model(extended_complete).flatten(0, 1)
-        negative_embedding = self.model(extended_negative).flatten(0, 1)
-        self.loss = lacc(anchor_embedding, positive_embedding, negative_embedding, self.loss_batch,
+            positive_embedding = self.model(extended_complete).flatten(0, 1)
+            negative_embedding = self.model(extended_negative).flatten(0, 1)
+            self.loss = lacc(anchor_embedding, positive_embedding, negative_embedding, self.loss_batch,
                          self.criterionContrast)
+        else:
+            self.model.eval()
+            with torch.no_grad():
+                self.partial_embedding = self.model(extended_anchor)
+                self.test_latent = partial_latent
 
     def collect_loss(self):
         loss_dict = {
