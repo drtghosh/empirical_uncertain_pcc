@@ -58,13 +58,13 @@ def test_imle_gen():
         write_point_cloud_ply(trainer.partial_pc[0].transpose(1, 0).cpu().numpy(), os.path.join(pc_dir, 'partial.ply'))
         point_cloud_list.append(trainer.partial_pc[0].transpose(1, 0).cpu().numpy())
         titles.append('Partial Cloud')
-        cmaps.append('Reds')
+        cmaps.append('red')
         # save the complete point cloud to results
         write_point_cloud_ply(trainer.complete_pc[0].transpose(1, 0).cpu().numpy(),
                               os.path.join(pc_dir, 'complete.ply'))
         point_cloud_list.append(trainer.complete_pc[0].transpose(1, 0).cpu().numpy())
         titles.append('Complete Cloud')
-        cmaps.append('Greens')
+        cmaps.append('green')
         # save the generated point clouds to results
         # store to estimate confidence
         num_gen = len(trainer.latent_gen_list)
@@ -77,7 +77,7 @@ def test_imle_gen():
             write_point_cloud_ply(gen_pc, os.path.join(pc_dir, f'gen_{j}.ply'))
             point_cloud_list.append(gen_pc)
             titles.append(f'Generated Cloud {j}')
-            cmaps.append('Blues')
+            cmaps.append('blue')
         # estimate confidence
         gen_mu = gen_clouds.mean(dim=0)
         gen_std = gen_clouds.std(dim=0)

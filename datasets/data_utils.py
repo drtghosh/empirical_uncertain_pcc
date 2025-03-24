@@ -294,10 +294,10 @@ def plot_pcd_one_view(filename, pcds, titles, suptitle='', sizes=None, cmaps=Non
     elev = 30
     azim = -45
     for j, (pcd, size) in enumerate(zip(pcds, sizes)):
-        color = pcd[:, 0]
+        # color = pcd[:, 0]
         ax = fig.add_subplot(1, len(pcds), j + 1, projection='3d')
         ax.view_init(elev, azim)
-        ax.scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], zdir=zdir, c=color, s=size, cmap=cmaps[j], vmin=-1.0, vmax=0.5)
+        ax.scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], zdir=zdir, c=cmaps[j], s=size, vmin=-1.0, vmax=0.5)
         ax.set_title(titles[j])
         ax.set_axis_off()
         ax.set_xlim(xlim)
