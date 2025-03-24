@@ -59,7 +59,7 @@ def test_con():
         # create a grid around partial data
         grid_data, grid_sizes = create_grid(trainer.partial_pc.transpose(1, 2), config.grid_size,
                                             trainer.partial_pc.size(1))
-        grid_data.to(trainer.device)
+        grid_data = grid_data.to(trainer.device)
         # output embedding for grid points
         extended_grid = torch.cat([grid_data, trainer.test_latent.expand(-1, grid_data.size(1), -1)], 2)
         trainer.model.eval()
@@ -68,8 +68,8 @@ def test_con():
 
         # create negative data for the partial data
         negative_cloud, negative_label = create_negative_with_label(trainer.partial_pc.transpose(1, 2))
-        negative_cloud.to(trainer.device)
-        negative_label.to(trainer.device)
+        negative_cloud = negative_cloud.to(trainer.device)
+        negative_label = negative_label.to(trainer.device)
         # output embedding for negative data
         extended_negative = torch.cat([negative_cloud, trainer.test_latent.expand(-1, negative_cloud.size(1), -1)], 2)
         trainer.model.eval()
