@@ -290,7 +290,7 @@ def plot_pcd_one_view(filename, pcds, titles, suptitle='', sizes=None, colors=No
                       ylim=(-0.5, 0.5), zlim=(-0.5, 0.5)):
     selected_gen = np.random.randint(2, len(pcds)-2, 3)
     selected_gen = np.concatenate(([0, 1], selected_gen, [len(pcds) - 1]))
-    pcds = np.array(pcds)[selected_gen]
+    pcds = [pcds[i] for i in selected_gen]
     titles = np.array(titles)[selected_gen]
     colors = np.array(colors)[selected_gen]
     if sizes is None:
