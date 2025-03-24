@@ -180,7 +180,7 @@ class Config(object):
         group = parser.add_argument_group('testing')
         # generator
         group.add_argument('--num_sample', type=int, default=10, help="Number test samples to use, -1 for all")
-        group.add_argument('--gen_samples_test', type=int, default=5, help="Number of completion outputs per sample")
+        group.add_argument('--gen_samples_test', type=int, default=10, help="Number of completion outputs per sample")
 
         # contrastive and gaussian process
         group.add_argument('--grid_size', type=int, default=100, help="Resolution in each dim for predictive grid")
