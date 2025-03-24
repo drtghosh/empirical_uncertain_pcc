@@ -64,7 +64,7 @@ def test_con():
         extended_grid = torch.cat([grid_data, trainer.test_latent.expand(-1, grid_data.size(1), -1)], 2)
         trainer.model.eval()
         with torch.no_grad():
-            grid_embedding = trainer.model(extended_grid)
+            grid_embedding = trainer.model(extended_grid).flatten(0, 1)
 
         # create negative data for the partial data
         negative_cloud, negative_label = create_negative_with_label(trainer.partial_pc.transpose(1, 2))
