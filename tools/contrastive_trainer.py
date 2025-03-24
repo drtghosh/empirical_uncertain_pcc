@@ -65,7 +65,7 @@ class TrainerAEContrast(TrainerContrastive):
             self.model.eval()
             with torch.no_grad():
                 self.partial_embedding = self.model(extended_anchor)
-                self.test_latent = partial_latent.view(partial_latent.size(0), 1, partial_latent.size(1))
+                self.test_latent = partial_latent.view(partial_latent.size(0), 1, partial_latent.size(1)).to(self.device)
 
     def collect_loss(self):
         loss_dict = {
