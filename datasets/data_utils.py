@@ -255,6 +255,8 @@ id_dict = {
 
 
 def create_grid(test_data, grid_size, space_dim=3, box_min=None, box_max=None, eps=0.2):
+    # send data to cpu
+    test_data = test_data.cpu()
     # create array of grid sizes
     grid_sizes = np.ones(space_dim, dtype=np.int32) * grid_size
     # find the bounding box for all dataset
