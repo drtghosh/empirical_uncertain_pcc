@@ -277,7 +277,7 @@ def create_negative_with_label(point_cloud_tensor, distance=1):
     if len(point_cloud_tensor.size()) > 2:
         point_cloud_tensor = point_cloud_tensor[0]
     point_cloud = o3d.geometry.PointCloud()
-    point_cloud.points = o3d.utility.Vector3dVector(point_cloud_tensor)
+    point_cloud.points = o3d.utility.Vector3dVector(point_cloud_tensor.cpu().numpy())
     point_cloud.estimate_normals()
     points = np.array(point_cloud.points)
     normals = np.array(point_cloud.normals)
