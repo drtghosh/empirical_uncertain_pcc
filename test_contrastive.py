@@ -69,7 +69,6 @@ def test_con():
         # create negative data for the partial data
         negative_cloud, negative_label = create_negative_with_label(trainer.partial_pc.transpose(1, 2))
         negative_cloud = negative_cloud.to(trainer.device)
-        negative_label = negative_label.to(trainer.device)
         # output embedding for negative data
         extended_negative = torch.cat([negative_cloud, trainer.test_latent.expand(-1, negative_cloud.size(1), -1)], 2)
         trainer.model.eval()
