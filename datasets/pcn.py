@@ -228,15 +228,19 @@ class PCNCon(Dataset):
         pc = random_sample(pc, self.n_pts)
         pc = torch.tensor(pc, dtype=torch.float32).transpose(1, 0)
 
-        # read negative (not on surface) cloud
-        negative_path = self.negative_paths[index]
-        npc = read_point_cloud_ply(negative_path)
-        # sample from negative cloud
-        npc = random_sample(npc, self.n_pts)
-        npc = torch.tensor(npc, dtype=torch.float32).transpose(1, 0)
+        if self.split == 'test':
+            return {"id": "/".join(self.data_names[index]), "gt_points": pc,
+                    "partial_id": render_choice, "partial_points": partial_pc, "partial_encoded": partial_enc}
+        else:
+            # read negative (not on surface) cloud
+            negative_path = self.negative_paths[index]
+            npc = read_point_cloud_ply(negative_path)
+            # sample from negative cloud
+            npc = random_sample(npc, self.n_pts)
+            npc = torch.tensor(npc, dtype=torch.float32).transpose(1, 0)
 
-        return {"id": "/".join(self.data_names[index]), "gt_points": pc, "negative_points": npc,
-                "partial_id": render_choice, "partial_points": partial_pc, "partial_encoded": partial_enc}
+            return {"id": "/".join(self.data_names[index]), "gt_points": pc, "negative_points": npc,
+                    "partial_id": render_choice, "partial_points": partial_pc, "partial_encoded": partial_enc}
 
     def _load_data(self, category):
         split_dict = split_data_by_cat(self.data_root, category)
