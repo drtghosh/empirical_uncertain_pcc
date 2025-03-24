@@ -286,7 +286,7 @@ def create_negative_with_label(point_cloud, distance=1):
     return negative_data, negative_label
 
 
-def plot_pcd_one_view(filename, pcds, titles, suptitle='', sizes=None, cmap='Reds', zdir='y', xlim=(-0.5, 0.5),
+def plot_pcd_one_view(filename, pcds, titles, suptitle='', sizes=None, cmaps=None, zdir='y', xlim=(-0.5, 0.5),
                       ylim=(-0.5, 0.5), zlim=(-0.5, 0.5)):
     if sizes is None:
         sizes = [0.5] * len(pcds)
@@ -297,7 +297,7 @@ def plot_pcd_one_view(filename, pcds, titles, suptitle='', sizes=None, cmap='Red
         color = pcd[:, 0]
         ax = fig.add_subplot(1, len(pcds), j + 1, projection='3d')
         ax.view_init(elev, azim)
-        ax.scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], zdir=zdir, c=color, s=size, cmap=cmap, vmin=-1.0, vmax=0.5)
+        ax.scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], zdir=zdir, c=color, s=size, cmap=cmaps[j], vmin=-1.0, vmax=0.5)
         ax.set_title(titles[j])
         ax.set_axis_off()
         ax.set_xlim(xlim)
