@@ -56,7 +56,7 @@ def test_imle_gen():
         # save the generated point clouds to results
         # store to estimate confidence
         num_gen = len(trainer.latent_gen_list)
-        gen_clouds = torch.zeros(num_gen, trainer.partial_pc.size(-1), trainer.partial_pc.size(1))
+        gen_clouds = torch.zeros(num_gen, trainer.complete_pc.size(-1), trainer.complete_pc.size(1))
         for j in range(num_gen):
             latent = trainer.latent_gen_list[j]
             gen_pc_tensor = trainer.pointAE.decode(latent)[0].transpose(1, 0)
