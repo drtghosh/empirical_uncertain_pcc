@@ -6,5 +6,5 @@ python test_contrastive.py -l proj_log_con \
                           -c car \
                           -b 1 \
                           -a proj_log_ae/pcn_car_ae/ae/model/ckpt_epoch100.pth \
-                          --ckpt 100
+                          --ckpt 100 \
                           --gp_batch 100
