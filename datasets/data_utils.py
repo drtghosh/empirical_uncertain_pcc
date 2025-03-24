@@ -5,6 +5,7 @@ import torch
 import h5py
 import laspy as lp
 import open3d as o3d
+from matplotlib import pyplot as plt
 
 
 def read_point_cloud_ply(path):
@@ -283,3 +284,26 @@ def create_negative_with_label(point_cloud, distance=1):
     negative_data = torch.tensor(negative_data, dtype=torch.float32).unsqueeze(0)
     negative_label = torch.tensor(random_distance, dtype=torch.float32)
     return negative_data, negative_label
+
+
+def plot_pcd_one_view(filename, pcds, titles, suptitle='', sizes=None, cmap='Reds', zdir='y', xlim=(-0.5, 0.5),
+                      ylim=(-0.5, 0.5), zlim=(-0.5, 0.5)):
+    if sizes is None:
+        sizes = [0.5] * len(pcds)
+    fig = plt.figure(figsize=(len(pcds) * 3 * 1.4, 3 * 1.4))
+    elev = 30
+    azim = -45
+    for j, (pcd, size) in enumerate(zip(pcds, sizes)):
+        color = pcd[:, 0]
+        ax = fig.add_subplot(1, len(pcds), j + 1, projection='3d')
+        ax.view_init(elev, azim)
+        ax.scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], zdir=zdir, c=color, s=size, cmap=cmap, vmin=-1.0, vmax=0.5)
+        ax.set_title(titles[j])
+        ax.set_axis_off()
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        ax.set_zlim(zlim)
+    plt.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.9, wspace=0.1, hspace=0.1)
+    plt.suptitle(suptitle)
+    fig.savefig(filename)
+    plt.close(fig)
