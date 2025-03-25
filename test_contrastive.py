@@ -77,6 +77,9 @@ def test_con():
 
         # combine test embeddings
         test_embedding = torch.cat([trainer.partial_embedding, negative_embedding], 1).flatten(0, 1)
+        idx_emb = torch.randperm(test_embedding.size(0))
+        subsample_idx_emb = idx_emb[:test_embedding.size(0) // 2]
+        test_embedding = test_embedding[subsample_idx_emb]
 
         # combine test labels
         test_label = torch.concat((torch.zeros(trainer.partial_pc.size(-1)), negative_label), 0).to(trainer.device)
