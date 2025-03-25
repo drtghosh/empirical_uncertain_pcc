@@ -77,13 +77,9 @@ def test_con():
 
         # combine test embeddings
         test_embedding = torch.cat([trainer.partial_embedding, negative_embedding], 1).flatten(0, 1)
-        idx_emb = torch.randperm(test_embedding.size(0))
-        subsample_idx_emb = idx_emb[:test_embedding.size(0) // 2]
-        test_embedding = test_embedding[subsample_idx_emb]
 
         # combine test labels
         test_label = torch.concat((torch.zeros(trainer.partial_pc.size(-1)), negative_label), 0).to(trainer.device)
-        test_label = test_label[subsample_idx_emb]
 
         # gaussian process
         cov_fn = gpytorch.kernels.RBFKernel(ard_num_dims=test_embedding.size(-1)).to(trainer.device)
@@ -96,15 +92,16 @@ def test_con():
         num_batches = grid_embedding.size(0) // config.gp_batch
         grid_posterior_mean = torch.empty(grid_embedding.size(0))
         grid_posterior_var = torch.empty(grid_embedding.size(0))
-        for i in range(num_batches):
-            b = grid_embedding[i * config.gp_batch: (i + 1) * config.gp_batch]
-            cov_pb = cov_fn(test_embedding, b).evaluate_kernel().to_dense()
-            cov_bb = cov_fn(b, b).evaluate_kernel().to_dense()
-            posterior_mean = cov_pb.T @ cov_inv @ test_label
-            posterior_var = cov_bb - cov_pb.T @ cov_inv @ cov_pb
-            posterior_diag = torch.diagonal(posterior_var, 0)
-            grid_posterior_mean[i * config.gp_batch: (i + 1) * config.gp_batch] = posterior_mean
-            grid_posterior_var[i * config.gp_batch: (i + 1) * config.gp_batch] = posterior_diag
+        with torch.no_grad():
+            for i in range(num_batches):
+                b = grid_embedding[i * config.gp_batch: (i + 1) * config.gp_batch]
+                cov_pb = cov_fn(test_embedding, b).evaluate_kernel().to_dense()
+                cov_bb = cov_fn(b, b).evaluate_kernel().to_dense()
+                posterior_mean = cov_pb.T @ cov_inv @ test_label
+                posterior_var = cov_bb - cov_pb.T @ cov_inv @ cov_pb
+                posterior_diag = torch.diagonal(posterior_var, 0)
+                grid_posterior_mean[i * config.gp_batch: (i + 1) * config.gp_batch] = posterior_mean
+                grid_posterior_var[i * config.gp_batch: (i + 1) * config.gp_batch] = posterior_diag
 
         # marching cubes
         vertices, faces, normals, values = marching_cubes(
