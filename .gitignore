@@ -2,3 +2,4 @@ external
 data
 proj_log_*
 wandb
+scripts/*/cluster*.sh
