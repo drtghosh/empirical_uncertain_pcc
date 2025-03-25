@@ -83,6 +83,7 @@ def test_con():
 
         # combine test labels
         test_label = torch.concat((torch.zeros(trainer.partial_pc.size(-1)), negative_label), 0).to(trainer.device)
+        test_label = test_label[subsample_idx_emb]
 
         # gaussian process
         cov_fn = gpytorch.kernels.RBFKernel(ard_num_dims=test_embedding.size(-1)).to(trainer.device)
