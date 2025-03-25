@@ -1,4 +1,4 @@
 external
 data
-proj_log_ae
+proj_log_*
 wandb
