@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 import numpy as np
 import gpytorch
-from gpytoolbox import write_mesh
+from gpytoolbox import write_mesh, fd_interpolate
 from skimage.measure import marching_cubes
 
 
@@ -42,57 +42,55 @@ def test_con():
         os.makedirs(save_dir)
 
     # test
-    for _ in tqdm(range(saved_test)):
-        data = next(test_loader)
-        with torch.no_grad():
+    with torch.no_grad():
+        for _ in tqdm(range(saved_test)):
+            data = next(test_loader)
             trainer.forward(data, False)
 
-        pc_dir = os.path.join(save_dir, trainer.data_id[0])
-        if not os.path.exists(pc_dir):
-            os.makedirs(pc_dir)
-        # save the partial point cloud to results
-        write_point_cloud_ply(trainer.partial_pc[0].transpose(1, 0).cpu().numpy(), os.path.join(pc_dir, 'partial.ply'))
-        # save the complete point cloud to results
-        write_point_cloud_ply(trainer.complete_pc[0].transpose(1, 0).cpu().numpy(),
-                              os.path.join(pc_dir, 'complete.ply'))
+            pc_dir = os.path.join(save_dir, trainer.data_id[0])
+            if not os.path.exists(pc_dir):
+                os.makedirs(pc_dir)
+            # save the partial point cloud to results
+            partial_points = trainer.partial_pc[0].transpose(1, 0).cpu().numpy()
+            write_point_cloud_ply(partial_points, os.path.join(pc_dir, 'partial.ply'))
+            # save the complete point cloud to results
+            write_point_cloud_ply(trainer.complete_pc[0].transpose(1, 0).cpu().numpy(),
+                                  os.path.join(pc_dir, 'complete.ply'))
 
-        # create a grid around partial data
-        grid_data, grid_sizes = create_grid(trainer.partial_pc.transpose(1, 2), config.grid_size,
-                                            trainer.partial_pc.size(1))
-        grid_data = grid_data.to(trainer.device)
-        # output embedding for grid points
-        extended_grid = torch.cat([grid_data, trainer.test_latent.expand(-1, grid_data.size(1), -1)], 2)
-        trainer.model.eval()
-        with torch.no_grad():
+            # create a grid around partial data
+            grid_data, grid_sizes, corner, spacing = create_grid(trainer.partial_pc.transpose(1, 2), config.grid_size,
+                                                trainer.partial_pc.size(1))
+            grid_data = grid_data.to(trainer.device)
+            # output embedding for grid points
+            extended_grid = torch.cat([grid_data, trainer.test_latent.expand(-1, grid_data.size(1), -1)], 2)
+            trainer.model.eval()
             grid_embedding = trainer.model(extended_grid).flatten(0, 1)
 
-        # create negative data for the partial data
-        negative_cloud, negative_label = create_negative_with_label(trainer.partial_pc.transpose(1, 2))
-        negative_cloud = negative_cloud.to(trainer.device)
-        # output embedding for negative data
-        extended_negative = torch.cat([negative_cloud, trainer.test_latent.expand(-1, negative_cloud.size(1), -1)], 2)
-        trainer.model.eval()
-        with torch.no_grad():
+            # create negative data for the partial data
+            negative_cloud, negative_label = create_negative_with_label(trainer.partial_pc.transpose(1, 2))
+            negative_cloud = negative_cloud.to(trainer.device)
+            # output embedding for negative data
+            extended_negative = torch.cat([negative_cloud, trainer.test_latent.expand(-1, negative_cloud.size(1), -1)], 2)
+            trainer.model.eval()
             negative_embedding = trainer.model(extended_negative)
 
-        # combine test embeddings
-        test_embedding = torch.cat([trainer.partial_embedding, negative_embedding], 1).flatten(0, 1)
+            # combine test embeddings
+            test_embedding = torch.cat([trainer.partial_embedding, negative_embedding], 1).flatten(0, 1)
 
-        # combine test labels
-        test_label = torch.concat((torch.zeros(trainer.partial_pc.size(-1)), negative_label), 0).to(trainer.device)
+            # combine test labels
+            test_label = torch.concat((torch.zeros(trainer.partial_pc.size(-1)), negative_label), 0).to(trainer.device)
 
-        # gaussian process
-        cov_fn = gpytorch.kernels.RBFKernel(ard_num_dims=test_embedding.size(-1)).to(trainer.device)
-        cov_pp = cov_fn(test_embedding).evaluate_kernel().to_dense()
-        additional_noise = config.noise_variance * torch.eye(test_embedding.size(0)).to(trainer.device)
-        cov_with_noise = (cov_pp + additional_noise)
-        cov_inv = torch.linalg.inv(cov_with_noise)
-        assert grid_embedding.size(
-            0) % config.gp_batch == 0, 'Number of grid points required to be a multiple of batch size'
-        num_batches = grid_embedding.size(0) // config.gp_batch
-        grid_posterior_mean = torch.empty(grid_embedding.size(0))
-        grid_posterior_var = torch.empty(grid_embedding.size(0))
-        with torch.no_grad():
+            # gaussian process
+            cov_fn = gpytorch.kernels.RBFKernel(ard_num_dims=test_embedding.size(-1)).to(trainer.device)
+            cov_pp = cov_fn(test_embedding).evaluate_kernel().to_dense()
+            additional_noise = config.noise_variance * torch.eye(test_embedding.size(0)).to(trainer.device)
+            cov_with_noise = (cov_pp + additional_noise)
+            cov_inv = torch.linalg.inv(cov_with_noise)
+            assert grid_embedding.size(
+                0) % config.gp_batch == 0, 'Number of grid points required to be a multiple of batch size'
+            num_batches = grid_embedding.size(0) // config.gp_batch
+            grid_posterior_mean = torch.empty(grid_embedding.size(0))
+            grid_posterior_var = torch.empty(grid_embedding.size(0))
             for i in range(num_batches):
                 b = grid_embedding[i * config.gp_batch: (i + 1) * config.gp_batch]
                 cov_pb = cov_fn(test_embedding, b).evaluate_kernel().to_dense()
@@ -103,11 +101,14 @@ def test_con():
                 grid_posterior_mean[i * config.gp_batch: (i + 1) * config.gp_batch] = posterior_mean
                 grid_posterior_var[i * config.gp_batch: (i + 1) * config.gp_batch] = posterior_diag
 
-        # marching cubes
-        vertices, faces, normals, values = marching_cubes(
-            np.reshape(grid_posterior_mean.cpu().detach().numpy(), grid_sizes, order='F'), level=0.0)
-        # save mesh into .obj file
-        write_mesh(os.path.join(pc_dir, 'mean.obj'), vertices, faces)
+            # shift posterior mean
+            W = fd_interpolate(partial_points, grid_sizes, spacing, corner)
+            shift = np.sum(W @ grid_posterior_mean.cpu().numpy()) / partial_points.shape[0]
+            shifted_mean = grid_posterior_mean.cpu().numpy() - shift
+            # marching cubes
+            vertices, faces, normals, values = marching_cubes(np.reshape(shifted_mean, grid_sizes, order='F'), level=0.0)
+            # save mesh into .obj file
+            write_mesh(os.path.join(pc_dir, 'mean.obj'), vertices, faces)
 
 
 if __name__ == '__main__':

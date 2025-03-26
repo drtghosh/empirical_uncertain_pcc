@@ -264,13 +264,15 @@ def create_grid(test_data, grid_size, space_dim=3, box_min=None, box_max=None, e
         box_min = torch.amin(test_data, 1)[0] - eps
     if box_max is None:
         box_max = torch.amax(test_data, 1)[0] + eps
+    # compute the grid spacing
+    grid_spacing = (box_max - box_min)/ (grid_size - 1)
 
     # Build a grid (dimension-agnostic)
     grid_vertices = np.meshgrid(
         *[np.linspace(box_min[d], box_max[d], grid_sizes[d]) for d in range(space_dim)])
     grid_vertices = np.stack(grid_vertices, axis=-1).reshape(-1, space_dim)
     grid_vertices = torch.tensor(grid_vertices, dtype=torch.float32)
-    return grid_vertices.unsqueeze(0), grid_sizes
+    return grid_vertices.unsqueeze(0), grid_sizes, box_min.numpy(), grid_spacing.numpy()
 
 
 def create_negative_with_label(point_cloud_tensor, distance=1):

@@ -7,4 +7,5 @@ python test_contrastive.py -l proj_log_con \
                           -b 1 \
                           -a proj_log_ae/pcn_car_ae/ae/model/ckpt_epoch100.pth \
                           --ckpt 100 \
+                          --grid_size 120 \
                           --gp_batch 1000
