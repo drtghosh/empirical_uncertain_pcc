@@ -58,12 +58,12 @@ class EncoderPC(nn.Module):
 
 class VectorQuantizer(nn.Module):
 	"""
-	    Quantizer class as the discretizer of the VQ-VAE.
+		Quantizer class as the discretizer of the VQ-VAE.
 
-	    Args-
-	    	n_latent : number of latent encodings / embeddings to choose from
+		Args-
+			n_latent : number of latent encodings / embeddings to choose from
 			latent_dim : latent dimension of the point cloud encoding representation
-	    	beta : commitment cost used in loss term, beta * ||z_e(x)-sg[e]||^2
+			beta : commitment cost used in loss term, beta * ||z_e(x)-sg[e]||^2
 	"""
 
 	def __init__(self, n_latent, latent_dim, beta):
@@ -78,49 +78,102 @@ class VectorQuantizer(nn.Module):
 
 	def forward(self, z):
 		"""
-		Inputs the output of the encoder network z and maps it to a discrete
-		one-hot vector that is the index of the closest embedding vector e_j
+			Takes as input the output z of the encoder network and maps it to a discrete
+			one-hot vector that corresponds to the index of the closest encoding vector e_j
 
-		z (continuous) -> z_q (discrete)
+			z (continuous) -> z_q (discrete)
 
-		z.shape = (batch, channel, height, width)
-
-		quantization pipeline:
-
-			1. get encoder input (B,C,H,W)
-			2. flatten input to (B*H*W,C)
-
+			z.shape = (batch, latent_dim)
 		"""
-		# reshape z -> (batch, height, width, channel) and flatten
-		z = z.permute(0, 2, 3, 1).contiguous()
-		z_flattened = z.view(-1, self.e_dim)
-		# distances from z to embeddings e_j (z - e)^2 = z^2 + e^2 - 2 e * z
+		# distances from z to encodings e_j (z - e)^2 = z^2 + e^2 - 2 e * z
+		d = torch.sum(z ** 2, dim=1, keepdim=True) + \
+			torch.sum(self.latents.weight ** 2, dim=1) - 2 * \
+			torch.matmul(z, self.latents.weight.t())
 
-		d = torch.sum(z_flattened ** 2, dim=1, keepdim=True) + \
-			torch.sum(self.embedding.weight ** 2, dim=1) - 2 * \
-			torch.matmul(z_flattened, self.embedding.weight.t())
-
-		# find closest encodings
+		# find the closest latent encodings
 		min_encoding_indices = torch.argmin(d, dim=1).unsqueeze(1)
 		min_encodings = torch.zeros(
-			min_encoding_indices.shape[0], self.n_e).to(device)
+			min_encoding_indices.shape[0], self.n_latent)
 		min_encodings.scatter_(1, min_encoding_indices, 1)
 
 		# get quantized latent vectors
-		z_q = torch.matmul(min_encodings, self.embedding.weight).view(z.shape)
+		z_q = torch.matmul(min_encodings, self.latents.weight).view(z.shape)
 
-		# compute loss for embedding
-		loss = torch.mean((z_q.detach() - z) ** 2) + self.beta * \
-			   torch.mean((z_q - z.detach()) ** 2)
+		# compute loss for embedding (codebook loss and commitment loss)
+		loss = torch.mean((z_q.detach() - z) ** 2) + self.beta * torch.mean((z_q - z.detach()) ** 2)
 
 		# preserve gradients
 		z_q = z + (z_q - z).detach()
 
 		# perplexity
-		e_mean = torch.mean(min_encodings, dim=0)
-		perplexity = torch.exp(-torch.sum(e_mean * torch.log(e_mean + 1e-10)))
-
-		# reshape back to match original input shape
-		z_q = z_q.permute(0, 3, 1, 2).contiguous()
+		latent_mean = torch.mean(min_encodings, dim=0)
+		perplexity = torch.exp(-torch.sum(latent_mean * torch.log(latent_mean + 1e-10)))
 
 		return loss, z_q, perplexity, min_encodings, min_encoding_indices
+
+
+class DecoderFC(nn.Module):
+	"""
+		Decoder class for reconstructing a 2/3D point cloud from the encoding.
+		Args-
+			n_features: tuple of number of features (#filters used in 1D convolutions) in each forward layer
+			latent_dim: latent dimension of the point cloud encoding representation
+			output_pts: number of points to output per cloud
+			normalize: boolean indicating batch normalization is used
+			space_dim: dimension of the data space
+	"""
+	def __init__(self, n_features=(256, 256), latent_dim=256, output_pts=2048, normalize=False, space_dim=3):
+		super(DecoderFC, self).__init__()
+		self.n_features = list(n_features) + [output_pts * space_dim]
+		self.output_pts = output_pts
+		self.latent_dim = latent_dim
+		self.space_dim = space_dim
+
+		model = []
+		prev_nf = self.latent_dim
+		for idx, nf in enumerate(self.n_features):
+			fc_layer = nn.Linear(prev_nf, nf)
+			model.append(fc_layer)
+
+			if normalize:
+				norm_layer = nn.BatchNorm1d(nf)
+				model.append(norm_layer)
+
+			if idx < len(n_features):
+				activation_layer = nn.LeakyReLU(inplace=True)
+				model.append(activation_layer)
+
+			prev_nf = nf
+
+		self.model = nn.Sequential(*model)
+
+	def forward(self, x):
+		x = self.model(x)
+		x = x.view((-1, self.space_dim, self.output_pts))
+		return x
+
+
+class VQVAE(nn.Module):
+	def __init__(self, config):
+		super(VQVAE, self).__init__()
+		self.encoder = EncoderPC(config.enc_features, config.latent_dim, config.res_layers, config.enc_norm,
+								config.space_dim)
+		self.decoder = DecoderFC(config.dec_features, config.latent_dim, config.n_pts, config.dec_norm,
+								config.space_dim)
+		self.quantizer = VectorQuantizer(config.n_latent, config.latent_dim, config.beta_commit)
+
+	def encode(self, x):
+		return self.encoder(x)
+
+	def decode(self, x):
+		return self.decoder(x)
+
+	def forward(self, x):
+		z = self.encoder(x)
+		loss_quant, z_q, perplexity, _, _ = self.quantizer(z)
+		x = self.decoder(z_q)
+		return x, loss_quant, perplexity
+
+
+if __name__ == '__main__':
+	pass
