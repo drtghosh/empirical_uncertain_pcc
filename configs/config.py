@@ -103,7 +103,7 @@ class Config(object):
         group.add_argument('-l', '--proj_dir', type=str, default="proj_logger",
                            help="Path to directory where experiment logs/models will be saved")
         group.add_argument('-d', '--device', type=str, default='cuda:0', help='Device for training/ inference')
-        group.add_argument('-m', '--module', type=str, choices=['ae', 'vae', 'c_gan', 'imle_gen', 'contrast_ae'],
+        group.add_argument('-m', '--module', type=str, choices=['ae', 'vae', 'vqvae', 'c_gan', 'imle_gen', 'contrast_ae'],
                            required=True, help="Choice of the model to be used")
 
     @staticmethod

@@ -1,0 +1,11 @@
+python train.py -l proj_log_vqvae \
+                -x pcn_car_vqvae \
+                -m vqvae \
+                -n pcn \
+                -r data/PCN \
+                -c car \
+                -b 200 \
+                --lr 1e-3 \
+                --save_frequency 10 \
+                -e 100 \
+		            --vis

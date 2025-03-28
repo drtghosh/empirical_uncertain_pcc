@@ -1,4 +1,6 @@
 from models.autoencoder import PointAE
+from models.vae import VAE
+from models.vqvae import VQVAE
 from models.multimodal_imle import Generator
 from models.generic_models import MLPBlock
 from models.model_utils import gen_nearest_latents
@@ -7,10 +9,14 @@ from models.model_utils import gen_nearest_latents
 def get_model(config, name):
     if name == "pointAE":
         return PointAE(config)
-    if name == "Gen":
+    elif name == "Gen":
         return Generator(config)
-    if name == "blockMLP":
+    elif name == "blockMLP":
         return MLPBlock(config)
+    elif name == "VAE":
+        return VAE(config)
+    elif name == "VQVAE":
+        return VQVAE(config)
     else:
         raise NotImplementedError("Got name '{}'".format(name))
 
