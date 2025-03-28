@@ -140,6 +140,7 @@ class Config(object):
 
         # vqvae quantizer
         group.add_argument("--n_latent", type=int, default=32)
+        group.add_argument("--beta_commit", type=float, default=0.25)
 
         # generator
         self.n_features_gen = (256, 512)
