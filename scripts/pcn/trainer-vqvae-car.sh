@@ -7,5 +7,5 @@ python train.py -l proj_log_vqvae \
                 -b 200 \
                 --lr 1e-3 \
                 --save_frequency 10 \
-                -e 100 \
+                -e 10 \
 		            --vis

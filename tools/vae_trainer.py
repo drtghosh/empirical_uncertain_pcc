@@ -30,7 +30,7 @@ class TrainerVAE(TrainerCommon):
 		if train:
 			emd_dis, assignment = self.criterion(self.predicted_pts.transpose(1, 2), target_pts, 0.05, 3000)
 			self.reconstruction_loss = torch.mean(torch.sqrt(emd_dis))
-			self.kld_loss = - 0.5 * torch.sum(1+ log_var - mean.pow(2) - log_var.exp())
+			self.kld_loss = - 0.5 * torch.mean(1+ log_var - mean.pow(2) - log_var.exp())
 			self.loss = self.reconstruction_loss + self.kld_loss
 
 	def collect_loss(self):

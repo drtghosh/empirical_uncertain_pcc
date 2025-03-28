@@ -138,6 +138,9 @@ class Config(object):
         self.dec_features = (256, 256)
         group.add_argument('--dec_norm', type=bool, default=False)
 
+        # vqvae quantizer
+        group.add_argument("--n_latent", type=int, default=32)
+
         # generator
         self.n_features_gen = (256, 512)
         group.add_argument('-a', '--path_pretrained_ae', type=str)
