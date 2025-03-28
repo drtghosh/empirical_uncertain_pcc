@@ -66,14 +66,15 @@ class VectorQuantizer(nn.Module):
 			beta : commitment cost used in loss term, beta * ||z_e(x)-sg[e]||^2
 	"""
 
-	def __init__(self, n_latent, latent_dim, beta):
+	def __init__(self, n_latent, latent_dim, beta, device):
 		super(VectorQuantizer, self).__init__()
 		self.n_latent = n_latent
 		self.latent_dim = latent_dim
 		self.beta = beta
+		self.device = device
 
 		# store and initialize the latent encodings (codebook)
-		self.latents = nn.Embedding(self.n_latent, self.latent_dim)
+		self.latents = nn.Embedding(self.n_latent, self.latent_dim).to(device)
 		self.latents.weight.data.uniform_(-1.0 / self.n_latent, 1.0 / self.n_latent)
 
 	def forward(self, z):
@@ -93,7 +94,7 @@ class VectorQuantizer(nn.Module):
 		# find the closest latent encodings
 		min_encoding_indices = torch.argmin(d, dim=1).unsqueeze(1)
 		min_encodings = torch.zeros(
-			min_encoding_indices.shape[0], self.n_latent)
+			min_encoding_indices.shape[0], self.n_latent).to(self.device)
 		min_encodings.scatter_(1, min_encoding_indices, 1)
 
 		# get quantized latent vectors
@@ -160,7 +161,7 @@ class VQVAE(nn.Module):
 								config.space_dim)
 		self.decoder = DecoderFC(config.dec_features, config.latent_dim, config.n_pts, config.dec_norm,
 								config.space_dim)
-		self.quantizer = VectorQuantizer(config.n_latent, config.latent_dim, config.beta_commit)
+		self.quantizer = VectorQuantizer(config.n_latent, config.latent_dim, config.beta_commit, config.device)
 
 	def encode(self, x):
 		return self.encoder(x)
