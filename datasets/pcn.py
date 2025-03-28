@@ -15,9 +15,9 @@ def get_dataloader_pcn(split, config):
 
     if config.module == "c_gan" or config.module == 'imle_gen':
         dataset = PCNGen(split, config.data_root, config.category, 'complete', 'partial', config.n_pts)
-    elif config.module == "ae" or config.module == "vae":
+    elif config.module == "ae" or config.module == "vae" or config.module == "vqvae":
         dataset = PCNAE(split, config.data_root, config.category, 'complete', config.n_pts)
-    elif config.module == "contrast_ae" or config.module == "contrast_vae":
+    elif config.module == "contrast_ae" or config.module == "contrast_vae" or config.module == "contrast_vqvae":
         dataset = PCNCon(split, config.data_root, config.category, 'complete', 'partial', 'negative', config.n_pts)
     else:
         raise ValueError
