@@ -406,6 +406,8 @@ class TrainerContrastive(object):
 
         # build network
         self.pointAE = None
+        self.vAE = None
+        self.vqvAE = None
         self.model = self.build_model(config)
 
         # set loss function and related stuff
