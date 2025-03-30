@@ -249,9 +249,15 @@ id_dict = {
     # seen categories
     "airplane": "02691156",  # plane
     "cabinet": "02933112",  # dresser
-    "car": "02958343"
+    "car": "02958343",
+    "chair": "03001627",
+    "lamp": "03636649",
+    "sofa": "04256520",
+    "table": "04379243",
+    "vessel": "04530566",  # boat
 }
-# save_negative_complete_pcn('data/PCN', 'validation', 'car', id_dict, True)
+save_negative_complete_pcn('data/PCN', 'train', 'table', id_dict, True)
+save_negative_complete_pcn('data/PCN', 'validation', 'table', id_dict, True)
 
 
 def create_grid(test_data, grid_size, space_dim=3, box_min=None, box_max=None, eps=0.2):
