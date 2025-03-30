@@ -271,7 +271,7 @@ def create_grid(test_data, grid_size, space_dim=3, box_min=None, box_max=None, e
     if box_max is None:
         box_max = torch.amax(test_data, 1)[0] + eps
     # compute the grid spacing
-    grid_spacing = (box_max - box_min)/ (grid_size - 1)
+    grid_spacing = (box_max - box_min) / (grid_size - 1)
 
     # Build a grid (dimension-agnostic)
     grid_vertices = np.meshgrid(

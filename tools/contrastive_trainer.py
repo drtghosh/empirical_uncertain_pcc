@@ -47,10 +47,12 @@ class TrainerAEContrast(TrainerContrastive):
         if train:
             negative_pc = data['negative_points'].to(self.device)
             anchor_embedding = self.model(extended_anchor).flatten(0, 1)
-            idx_pair = torch.randperm(self.complete_pc.size(-1))
-            subsample_idx_pair = idx_pair[:extended_anchor.size(1)]
-            sub_complete = self.complete_pc[:, :, subsample_idx_pair]
-            sub_negative = negative_pc[:, :, subsample_idx_pair]
+            idx_complete = torch.randperm(self.complete_pc.size(-1))
+            subsample_idx_complete = idx_complete[:extended_anchor.size(1)]
+            idx_negative = torch.randperm(negative_pc.size(-1))
+            subsample_idx_negative = idx_negative[:extended_anchor.size(1)]
+            sub_complete = self.complete_pc[:, :, subsample_idx_complete]
+            sub_negative = negative_pc[:, :, subsample_idx_negative]
 
             extended_complete = torch.cat([sub_complete, train_latent.expand(-1, -1, sub_complete.size(-1))], 1)
             extended_complete = extended_complete.transpose(1, 2)
@@ -65,7 +67,8 @@ class TrainerAEContrast(TrainerContrastive):
             self.model.eval()
             with torch.no_grad():
                 self.partial_embedding = self.model(extended_anchor)
-                self.test_latent = partial_latent.view(partial_latent.size(0), 1, partial_latent.size(1)).to(self.device)
+                self.test_latent = partial_latent.view(partial_latent.size(0), 1, partial_latent.size(1)).to(
+                    self.device)
 
     def collect_loss(self):
         loss_dict = {
