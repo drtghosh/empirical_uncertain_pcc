@@ -11,7 +11,9 @@ class TrainerAEContrast(TrainerContrastive):
         self.complete_pc = None
         self.data_id = None
         self.partial_embedding = None
+        self.complete_embedding = None
         self.test_latent = None
+        self.use_complete_test = False
 
     def build_model(self, config):
         # load pretrained pointAE
@@ -67,6 +69,10 @@ class TrainerAEContrast(TrainerContrastive):
             self.model.eval()
             with torch.no_grad():
                 self.partial_embedding = self.model(extended_anchor)
+                if self.use_complete_test:
+                    extended_complete = torch.cat([self.complete_pc, train_latent.expand(-1, -1, self.complete_pc.size(-1))], 1)
+                    extended_complete = extended_complete.transpose(1, 2)
+                    self.complete_embedding = self.model(extended_complete)
                 self.test_latent = partial_latent.view(partial_latent.size(0), 1, partial_latent.size(1)).to(
                     self.device)
 
@@ -84,7 +90,9 @@ class TrainerVQVAEContrast(TrainerContrastive):
         self.complete_pc = None
         self.data_id = None
         self.partial_embedding = None
+        self.complete_embedding = None
         self.test_latent = None
+        self.use_complete_test = False
 
     def build_model(self, config):
         # load pretrained pointAE
@@ -140,6 +148,10 @@ class TrainerVQVAEContrast(TrainerContrastive):
             self.model.eval()
             with torch.no_grad():
                 self.partial_embedding = self.model(extended_anchor)
+                if self.use_complete_test:
+                    extended_complete = torch.cat([self.complete_pc, train_latent.expand(-1, -1, self.complete_pc.size(-1))], 1)
+                    extended_complete = extended_complete.transpose(1, 2)
+                    self.complete_embedding = self.model(extended_complete)
                 self.test_latent = partial_latent.view(partial_latent.size(0), 1, partial_latent.size(1)).to(
                     self.device)
 
