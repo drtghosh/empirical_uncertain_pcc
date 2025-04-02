@@ -61,16 +61,30 @@ def test_con():
             grid_data, grid_sizes, corner, spacing = create_grid(trainer.partial_pc.transpose(1, 2), config.grid_size,
                                                 trainer.partial_pc.size(1))
             grid_data = grid_data.to(trainer.device)
+            # create a grid around complete data
+            grid_data_c, grid_sizes_c, corner_c, spacing_c = create_grid(trainer.complete_pc.transpose(1, 2),
+                                                                         config.grid_size, trainer.complete_pc.size(1))
+            grid_data_c = grid_data_c.to(trainer.device)
+
+            """
+                Compare two grids and plot grid vertices along with the point clouds
+            """
+
             # output embedding for grid points
             extended_grid = torch.cat([grid_data, trainer.test_latent.expand(-1, grid_data.size(1), -1)], 2)
             trainer.model.eval()
             grid_embedding = trainer.model(extended_grid).flatten(0, 1)
 
+            """
+                Compare embeddings of partial, complete, negative and grid vertices
+            """
+
             # create negative data for the partial data
             negative_cloud, negative_label = create_negative_with_label(trainer.partial_pc.transpose(1, 2))
             negative_cloud = negative_cloud.to(trainer.device)
             # output embedding for negative data
-            extended_negative = torch.cat([negative_cloud, trainer.test_latent.expand(-1, negative_cloud.size(1), -1)], 2)
+            extended_negative = torch.cat([negative_cloud, trainer.test_latent.expand(-1, negative_cloud.size(1), -1)],
+                                          2)
             trainer.model.eval()
             negative_embedding = trainer.model(extended_negative)
 
@@ -106,7 +120,8 @@ def test_con():
             shift = np.sum(W @ grid_posterior_mean.cpu().numpy()) / partial_points.shape[0]
             shifted_mean = grid_posterior_mean.cpu().numpy() - shift
             # marching cubes
-            vertices, faces, normals, values = marching_cubes(np.reshape(shifted_mean, grid_sizes, order='F'), level=0.0)
+            vertices, faces, normals, values = marching_cubes(np.reshape(shifted_mean, grid_sizes, order='F'),
+                                                              level=0.0)
             # save mesh into .obj file
             write_mesh(os.path.join(pc_dir, 'mean.obj'), vertices, faces)
 
