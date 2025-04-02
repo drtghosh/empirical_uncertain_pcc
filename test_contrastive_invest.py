@@ -13,6 +13,8 @@ import gpytorch
 from gpytoolbox import write_mesh, fd_interpolate
 from skimage.measure import marching_cubes
 
+import seaborn as sns
+
 
 def test_con():
     # create experiment config containing all hyperparameters
@@ -37,7 +39,7 @@ def test_con():
 
     # directory to save results
     save_dir = os.path.join(config.proj_dir,
-                            "results/ckpt-{}-n{}".format(config.ckpt, saved_test))
+                            "results_invest/ckpt-{}-n{}".format(config.ckpt, saved_test))
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
@@ -45,6 +47,8 @@ def test_con():
     with torch.no_grad():
         for _ in tqdm(range(saved_test)):
             data = next(test_loader)
+
+            trainer.use_complete_test = True
             trainer.forward(data, False)
 
             pc_dir = os.path.join(save_dir, trainer.data_id[0])
@@ -69,15 +73,23 @@ def test_con():
             """
                 Compare two grids and plot grid vertices along with the point clouds
             """
+            grid_log_file = os.path.join(pc_dir, 'grid_compare.txt')
+            with open(grid_log_file, 'w') as fg:
+                fg.write(f"Corners of grid encompassing partial data: {corner, grid_data[-1]}!\n")
+                fg.write("Grid range (partial):\n")
+                fg.write(f"x axis: {spacing[0] * (grid_sizes[0] -1)}\n")
+                fg.write(f"y axis: {spacing[1] * (grid_sizes[1] - 1)}\n")
+                fg.write(f"z axis: {spacing[2] * (grid_sizes[2] - 1)}\n")
+                fg.write(f"Corners of grid encompassing complete data: {corner_c, grid_data_c[-1]}!")
+                fg.write("Grid range (complete):\n")
+                fg.write(f"x axis: {spacing_c[0] * (grid_sizes_c[0] - 1)}\n")
+                fg.write(f"y axis: {spacing_c[1] * (grid_sizes_c[1] - 1)}\n")
+                fg.write(f"z axis: {spacing_c[2] * (grid_sizes_c[2] - 1)}\n")
 
             # output embedding for grid points
             extended_grid = torch.cat([grid_data, trainer.test_latent.expand(-1, grid_data.size(1), -1)], 2)
             trainer.model.eval()
             grid_embedding = trainer.model(extended_grid).flatten(0, 1)
-
-            """
-                Compare embeddings of partial, complete, negative and grid vertices
-            """
 
             # create negative data for the partial data
             negative_cloud, negative_label = create_negative_with_label(trainer.partial_pc.transpose(1, 2))
@@ -87,6 +99,24 @@ def test_con():
                                           2)
             trainer.model.eval()
             negative_embedding = trainer.model(extended_negative)
+
+            """
+                Compare embeddings of partial, complete, negative points
+            """
+            part_pair_distance = torch.cdist(trainer.partial_embedding, trainer.partial_embedding, p=2).flatten(0, 1)
+            heatmap_part = sns.heatmap(part_pair_distance.cpu().numpy())
+            heatmap1 = heatmap_part.get_figure()
+            heatmap1.savefig(os.path.join(pc_dir, 'heatmap_partial.jpg'))
+
+            comp_pair_distance = torch.cdist(trainer.complete_embedding, trainer.complete_embedding, p=2).flatten(0, 1)
+            heatmap_comp = sns.heatmap(comp_pair_distance.cpu().numpy())
+            heatmap2 = heatmap_comp.get_figure()
+            heatmap2.savefig(os.path.join(pc_dir, 'heatmap_complete.jpg'))
+
+            neg_pair_distance = torch.cdist(negative_embedding, negative_embedding, p=2).flatten(0, 1)
+            heatmap_neg = sns.heatmap(neg_pair_distance.cpu().numpy())
+            heatmap3 = heatmap_neg.get_figure()
+            heatmap3.savefig(os.path.join(pc_dir, 'heatmap_negative.jpg'))
 
             # combine test embeddings
             test_embedding = torch.cat([trainer.partial_embedding, negative_embedding], 1).flatten(0, 1)
