@@ -87,7 +87,7 @@ def test_con():
                 fg.write(f"z axis: {spacing_c[2] * (grid_sizes_c[2] - 1)}\n")
 
             # output embedding for grid points
-            extended_grid = torch.cat([grid_data, trainer.test_latent.expand(-1, grid_data.size(1), -1)], 2)
+            extended_grid = torch.cat([grid_data_c, trainer.test_latent.expand(-1, grid_data_c.size(1), -1)], 2)
             trainer.model.eval()
             grid_embedding = trainer.model(extended_grid).flatten(0, 1)
 
@@ -118,6 +118,21 @@ def test_con():
             heatmap3 = heatmap_neg.get_figure()
             heatmap3.savefig(os.path.join(pc_dir, 'heatmap_negative.jpg'))
 
+            part_comp_distance = torch.cdist(trainer.partial_embedding, trainer.complete_embedding, p=2).flatten(0, 1)
+            heatmap_pc = sns.heatmap(part_comp_distance.cpu().numpy())
+            heatmap4 = heatmap_pc.get_figure()
+            heatmap4.savefig(os.path.join(pc_dir, 'heatmap_part_vs_comp.jpg'))
+
+            part_neg_distance = torch.cdist(trainer.partial_embedding, negative_embedding, p=2).flatten(0, 1)
+            heatmap_pn = sns.heatmap(part_neg_distance.cpu().numpy())
+            heatmap5 = heatmap_pn.get_figure()
+            heatmap5.savefig(os.path.join(pc_dir, 'heatmap_part_vs_neg.jpg'))
+
+            comp_neg_distance = torch.cdist(trainer.complete_embedding, negative_embedding, p=2).flatten(0, 1)
+            heatmap_cn = sns.heatmap(comp_neg_distance.cpu().numpy())
+            heatmap6 = heatmap_cn.get_figure()
+            heatmap6.savefig(os.path.join(pc_dir, 'heatmap_comp_vs_neg.jpg'))
+
             # combine test embeddings
             test_embedding = torch.cat([trainer.partial_embedding, negative_embedding], 1).flatten(0, 1)
 
@@ -146,7 +161,7 @@ def test_con():
                 grid_posterior_var[i * config.gp_batch: (i + 1) * config.gp_batch] = posterior_diag
 
             # shift posterior mean
-            W = fd_interpolate(partial_points, grid_sizes, spacing, corner)
+            W = fd_interpolate(partial_points, grid_sizes_c, spacing_c, corner_c)
             shift = np.sum(W @ grid_posterior_mean.cpu().numpy()) / partial_points.shape[0]
             shifted_mean = grid_posterior_mean.cpu().numpy() - shift
             # marching cubes
