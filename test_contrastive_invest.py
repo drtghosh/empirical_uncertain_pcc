@@ -14,7 +14,6 @@ from gpytoolbox import write_mesh, fd_interpolate
 from skimage.measure import marching_cubes
 
 import seaborn as sns
-from matplotlib import pyplot as plt
 
 
 def test_con():
@@ -104,37 +103,33 @@ def test_con():
             """
                 Compare embeddings of partial, complete, negative points
             """
-            print(trainer.partial_embedding.shape)
-            part_pair_distance = torch.cdist(trainer.partial_embedding, trainer.partial_embedding, p=2)
-            print(part_pair_distance.shape)
-            print(part_pair_distance.flatten(0, 1).shape)
-            heatmap_part = sns.heatmap(part_pair_distance.flatten(0, 1).cpu().numpy())
-            plt.show()
+            part_pair_distance = torch.cdist(trainer.partial_embedding, trainer.partial_embedding, p=2).flatten(0, 1)
+            heatmap_part = sns.heatmap(part_pair_distance.cpu().numpy(), cbar=False)
             heatmap1 = heatmap_part.get_figure()
             heatmap1.savefig(os.path.join(pc_dir, 'heatmap_partial.jpg'))
 
             comp_pair_distance = torch.cdist(trainer.complete_embedding, trainer.complete_embedding, p=2).flatten(0, 1)
-            heatmap_comp = sns.heatmap(comp_pair_distance.cpu().numpy())
+            heatmap_comp = sns.heatmap(comp_pair_distance.cpu().numpy(), cbar=False)
             heatmap2 = heatmap_comp.get_figure()
             heatmap2.savefig(os.path.join(pc_dir, 'heatmap_complete.jpg'))
 
             neg_pair_distance = torch.cdist(negative_embedding, negative_embedding, p=2).flatten(0, 1)
-            heatmap_neg = sns.heatmap(neg_pair_distance.cpu().numpy())
+            heatmap_neg = sns.heatmap(neg_pair_distance.cpu().numpy(), cbar=False)
             heatmap3 = heatmap_neg.get_figure()
             heatmap3.savefig(os.path.join(pc_dir, 'heatmap_negative.jpg'))
 
             part_comp_distance = torch.cdist(trainer.partial_embedding, trainer.complete_embedding, p=2).flatten(0, 1)
-            heatmap_pc = sns.heatmap(part_comp_distance.cpu().numpy())
+            heatmap_pc = sns.heatmap(part_comp_distance.cpu().numpy(), cbar=False)
             heatmap4 = heatmap_pc.get_figure()
             heatmap4.savefig(os.path.join(pc_dir, 'heatmap_part_vs_comp.jpg'))
 
             part_neg_distance = torch.cdist(trainer.partial_embedding, negative_embedding, p=2).flatten(0, 1)
-            heatmap_pn = sns.heatmap(part_neg_distance.cpu().numpy())
+            heatmap_pn = sns.heatmap(part_neg_distance.cpu().numpy(), cbar=False)
             heatmap5 = heatmap_pn.get_figure()
             heatmap5.savefig(os.path.join(pc_dir, 'heatmap_part_vs_neg.jpg'))
 
             comp_neg_distance = torch.cdist(trainer.complete_embedding, negative_embedding, p=2).flatten(0, 1)
-            heatmap_cn = sns.heatmap(comp_neg_distance.cpu().numpy())
+            heatmap_cn = sns.heatmap(comp_neg_distance.cpu().numpy(), cbar=False)
             heatmap6 = heatmap_cn.get_figure()
             heatmap6.savefig(os.path.join(pc_dir, 'heatmap_comp_vs_neg.jpg'))
 
