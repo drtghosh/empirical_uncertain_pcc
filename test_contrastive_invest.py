@@ -14,6 +14,7 @@ from gpytoolbox import write_mesh, fd_interpolate
 from skimage.measure import marching_cubes
 
 import seaborn as sns
+from matplotlib import pyplot as plt
 
 
 def test_con():
@@ -75,12 +76,12 @@ def test_con():
             """
             grid_log_file = os.path.join(pc_dir, 'grid_compare.txt')
             with open(grid_log_file, 'w') as fg:
-                fg.write(f"Corners of grid encompassing partial data: {corner, grid_data[-1]}!\n")
+                fg.write(f"Corners of grid encompassing partial data: {corner, grid_data[0][-1]}!\n")
                 fg.write("Grid range (partial):\n")
                 fg.write(f"x axis: {spacing[0] * (grid_sizes[0] -1)}\n")
                 fg.write(f"y axis: {spacing[1] * (grid_sizes[1] - 1)}\n")
                 fg.write(f"z axis: {spacing[2] * (grid_sizes[2] - 1)}\n")
-                fg.write(f"Corners of grid encompassing complete data: {corner_c, grid_data_c[-1]}!")
+                fg.write(f"Corners of grid encompassing complete data: {corner_c, grid_data_c[0][-1]}!")
                 fg.write("Grid range (complete):\n")
                 fg.write(f"x axis: {spacing_c[0] * (grid_sizes_c[0] - 1)}\n")
                 fg.write(f"y axis: {spacing_c[1] * (grid_sizes_c[1] - 1)}\n")
@@ -103,8 +104,12 @@ def test_con():
             """
                 Compare embeddings of partial, complete, negative points
             """
-            part_pair_distance = torch.cdist(trainer.partial_embedding, trainer.partial_embedding, p=2).flatten(0, 1)
-            heatmap_part = sns.heatmap(part_pair_distance.cpu().numpy())
+            print(trainer.partial_embedding.shape)
+            part_pair_distance = torch.cdist(trainer.partial_embedding, trainer.partial_embedding, p=2)
+            print(part_pair_distance.shape)
+            print(part_pair_distance.flatten(0, 1).shape)
+            heatmap_part = sns.heatmap(part_pair_distance.flatten(0, 1).cpu().numpy())
+            plt.show()
             heatmap1 = heatmap_part.get_figure()
             heatmap1.savefig(os.path.join(pc_dir, 'heatmap_partial.jpg'))
 
