@@ -80,7 +80,7 @@ def test_con():
                 fg.write(f"x axis: {spacing[0] * (grid_sizes[0] -1)}\n")
                 fg.write(f"y axis: {spacing[1] * (grid_sizes[1] - 1)}\n")
                 fg.write(f"z axis: {spacing[2] * (grid_sizes[2] - 1)}\n")
-                fg.write(f"Corners of grid encompassing complete data: {corner_c, grid_data_c[0][-1]}!")
+                fg.write(f"Corners of grid encompassing complete data: {corner_c, grid_data_c[0][-1]}!\n")
                 fg.write("Grid range (complete):\n")
                 fg.write(f"x axis: {spacing_c[0] * (grid_sizes_c[0] - 1)}\n")
                 fg.write(f"y axis: {spacing_c[1] * (grid_sizes_c[1] - 1)}\n")

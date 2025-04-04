@@ -19,6 +19,8 @@ def get_dataloader_pcn(split, config):
         dataset = PCNAE(split, config.data_root, config.category, 'complete', config.n_pts)
     elif config.module == "contrast_ae" or config.module == "contrast_vae" or config.module == "contrast_vqvae":
         dataset = PCNCon(split, config.data_root, config.category, 'complete', 'partial', 'negative', config.n_pts)
+    elif config.module == "contrast_all_ae" or config.module == "contrast_all_vae" or config.module == "contrast_all_vqvae":
+        dataset = PCNConAll(split, config.data_root, config.category, 'complete', 'partial', 'negative', config.n_pts)
     else:
         raise ValueError
     dataloader = DataLoader(dataset, batch_size=config.batch_size, shuffle=is_shuffle, num_workers=config.num_workers,
@@ -259,6 +261,81 @@ class PCNCon(Dataset):
             gt_paths.append(gt_ply_path)
             negative_paths.append(negative_ply_path)
             partial_paths.append(partial_ply_path)
+
+        return split_names, gt_paths, negative_paths, partial_paths
+
+    def __len__(self):
+        return len(self.data_names)
+
+
+class PCNConAll(Dataset):
+    def __init__(self, split, data_root, category, gt_path, partial_path, negative_path, n_pts):
+        super(PCNConAll, self).__init__()
+        self.split = split
+        # self.shuffle = (split == "train")
+        self.data_root = data_root
+        self.gt_path = os.path.join(data_root, split, gt_path)
+        self.partial_path = os.path.join(data_root, split, partial_path)
+        self.negative_path = os.path.join(data_root, split, negative_path)
+        self.data_names, self.gt_paths, self.negative_paths, self.partial_paths = self._load_data(category)
+        self.n_pts = n_pts
+        self.partial_pts = n_pts // 2
+
+    def __getitem__(self, index):
+        # read partial cloud
+        partial_path = self.partial_paths[index]
+        partial_pc = read_point_cloud_ply(partial_path)
+        # modify partial cloud
+        partial_pc = add_noise_pc(partial_pc)
+        partial_pc = random_sample(partial_pc, self.partial_pts)
+        partial_pc = torch.tensor(partial_pc, dtype=torch.float32)
+        partial_enc = positional_encoding(partial_pc).transpose(1, 0)
+        partial_pc = partial_pc.transpose(1, 0)
+
+        # read ground truth cloud
+        gt_path = self.gt_paths[index]
+        pc = read_point_cloud_ply(gt_path)
+        # sample from ground truth cloud
+        pc = random_sample(pc, self.n_pts)
+        pc = torch.tensor(pc, dtype=torch.float32).transpose(1, 0)
+
+        if self.split == 'test':
+            return {"id": "/".join(self.data_names[index]), "gt_points": pc,
+                    "partial_id": 0, "partial_points": partial_pc, "partial_encoded": partial_enc}
+        else:
+            # read negative (not on surface) cloud
+            negative_path = self.negative_paths[index]
+            npc = read_point_cloud_ply(negative_path)
+            # sample from negative cloud
+            npc = random_sample(npc, self.n_pts)
+            npc = torch.tensor(npc, dtype=torch.float32).transpose(1, 0)
+
+            return {"id": "/".join(self.data_names[index]), "gt_points": pc, "negative_points": npc,
+                    "partial_id": index % 8, "partial_points": partial_pc, "partial_encoded": partial_enc}
+
+    def _load_data(self, category):
+        split_dict = split_data_by_cat(self.data_root, category)
+        split_names = split_dict[self.split]
+        gt_paths = list()
+        negative_paths = list()
+        partial_paths = list()
+        for name in split_names:
+            if self.split == 'train':
+                for i in range(8):
+                    gt_ply_path = os.path.join(self.gt_path, name[0], name[1] + '.ply')
+                    negative_ply_path = os.path.join(self.negative_path, name[0], name[1] + '.ply')
+                    partial_ply_path = os.path.join(self.partial_path, name[0], name[1] + f'_{i}.ply')
+                    gt_paths.append(gt_ply_path)
+                    negative_paths.append(negative_ply_path)
+                    partial_paths.append(partial_ply_path)
+            else:
+                gt_ply_path = os.path.join(self.gt_path, name[0], name[1] + '.ply')
+                negative_ply_path = os.path.join(self.negative_path, name[0], name[1] + '.ply')
+                partial_ply_path = os.path.join(self.partial_path, name[0], name[1] + '.ply')
+                # if os.path.exists(gt_ply_path) and os.path.exists(partial_ply_path):
+                gt_paths.append(gt_ply_path)
+                negative_paths.append(negative_ply_path)
+                partial_paths.append(partial_ply_path)
 
         return split_names, gt_paths, negative_paths, partial_paths
 

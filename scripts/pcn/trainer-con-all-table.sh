@@ -1,0 +1,12 @@
+python /clusterstorage/dghosh/empirical_uncertain_pcc/train.py -l proj_log_con_all_ae_cl \
+                                                              -x pcn_table_con_all_ae_cl \
+                                                              -m contrast_all_ae \
+                                                              -n pcn \
+                                                              -r data/PCN \
+                                                              -c table \
+                                                              -b 256 \
+                                                              -w 6 \
+                                                              -a proj_log_ae_cl/pcn_table_ae_cl/ae/model/ckpt_epoch200.pth \
+                                                              --lr 1e-3 \
+                                                              --save_frequency 50 \
+                                                              -e 500

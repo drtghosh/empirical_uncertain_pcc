@@ -14,7 +14,7 @@ def get_trainer(config):
         return TrainerVQVAE(config)
     elif config.module == 'imle_gen':
         return TrainerIMLE(config)
-    elif config.module == 'contrast_ae':
+    elif config.module == 'contrast_ae' or config.module == 'contrast_all_ae':
         return TrainerAEContrast(config)
     elif config.module == 'contrast_vqvae':
         return TrainerVQVAEContrast(config)
