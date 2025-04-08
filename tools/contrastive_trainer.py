@@ -127,19 +127,22 @@ class TrainerVQVAEContrast(TrainerContrastive):
         extended_anchor = extended_anchor.transpose(1, 2)
         if train:
             negative_pc = data['negative_points'].to(self.device)
-            anchor_embedding = self.model(extended_anchor).flatten(0, 1)
-            idx_complete = torch.randperm(self.complete_pc.size(-1))
+            batched_anchor_embedding = self.model(extended_anchor)
+            """idx_complete = torch.randperm(self.complete_pc.size(-1))
             subsample_idx_complete = idx_complete[:extended_anchor.size(1)]
             idx_negative = torch.randperm(negative_pc.size(-1))
             subsample_idx_negative = idx_negative[:extended_anchor.size(1)]
             sub_complete = self.complete_pc[:, :, subsample_idx_complete]
-            sub_negative = negative_pc[:, :, subsample_idx_negative]
+            sub_negative = negative_pc[:, :, subsample_idx_negative]"""
 
-            extended_complete = torch.cat([sub_complete, train_latent.expand(-1, -1, sub_complete.size(-1))], 1)
+            extended_complete = torch.cat([self.complete_pc, train_latent.expand(-1, -1, self.complete_pc.size(-1))], 1)
             extended_complete = extended_complete.transpose(1, 2)
-            extended_negative = torch.cat([sub_negative, train_latent.expand(-1, -1, sub_negative.size(-1))], 1)
+            extended_negative = torch.cat([negative_pc, train_latent.expand(-1, -1, negative_pc.size(-1))], 1)
             extended_negative = extended_negative.transpose(1, 2)
 
+            # repeat anchor embedding to match other embedding sizes
+            anchor_embedding = batched_anchor_embedding.repeat(1, self.complete_pc.size(-1) // self.partial_pc.size(-1),
+                                                               1).flatten(0, 1)
             positive_embedding = self.model(extended_complete).flatten(0, 1)
             negative_embedding = self.model(extended_negative).flatten(0, 1)
             self.loss = lacc(anchor_embedding, positive_embedding, negative_embedding, self.loss_batch,
