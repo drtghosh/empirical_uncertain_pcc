@@ -389,8 +389,8 @@ class MLPConv(nn.Module):
 
         # initialize the weights
         for i in range(len(model)):
-            nn.init.xavier_uniform_(self.model[i].weight)
-        nn.init.xavier_uniform_(self.direct_conv.weight)
+            nn.init.xavier_normal_(self.model[i].weight)
+        nn.init.xavier_normal_(self.direct_conv.weight)
 
     def forward(self, x):
         # get the direct convolution result
