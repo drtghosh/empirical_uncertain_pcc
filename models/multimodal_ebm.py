@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
+from generic_models import MLPConv
 
 
 class EncoderPC(nn.Module):
@@ -99,13 +100,39 @@ class DecoderFC(nn.Module):
 
 
 class EBM(nn.Module):
-	def __init__(self, step_size=1, n_step=32, noise_scale=None):
+	def __init__(self, ebm_dim=128, step_size=1, n_step=32, noise_scale=None):
 		super(EBM, self).__init__()
 		self.step_size = step_size
 		self.n_step = n_step
 		self.noise_scale = noise_scale
 		if noise_scale is None:
 			self.noise_scale = np.sqrt(step_size * 2)
+		self.model = nn.Sequential(
+			MLPConv(ebm_dim, 1, ebm_dim, ebm_dim),
+			nn.Conv1d(ebm_dim, ebm_dim, 1),
+			nn.GELU(),
+			nn.Conv1d(ebm_dim, 1, 1)
+		)
+
+	def sample_langevin(self, z0):
+		z = z0.clone().detach()
+		z.requires_grad = True
+		with torch.enable_grad():
+			for _ in range(self.n_step):
+				noise = torch.randn_like(z) * self.noise_scale
+				out = self.model(z)
+				grad = torch.autograd.grad(out.sum(), z, only_inputs=True)[0]
+				dynamics = self.step_size * grad + noise
+				z = z + dynamics
+		z1 = z
+		r = z1 - z0
+		return r.detach()
+
+	def forward(self, x):
+		return self.model(x).squeeze(-1)
+
+	def get_energy(self, x):
+		return self.forward(x)
 
 
 class EBMCompletion(nn.Module):
@@ -113,6 +140,7 @@ class EBMCompletion(nn.Module):
 		super(EBMCompletion, self).__init__()
 		self.encoder = EncoderPC(config.enc_features, config.latent_dim, config.res_layers, config.enc_norm, config.space_dim)
 		self.decoder = DecoderFC(config.dec_features, config.latent_dim, config.n_pts, config.dec_norm, config.space_dim)
+		self.ebm = EBM(config.latent_dim, config.step_size, config.n_step, config.noise_scale)
 
 	def encode(self, x):
 		return self.encoder(x)
@@ -122,6 +150,8 @@ class EBMCompletion(nn.Module):
 
 	def forward(self, x, is_partial=True):
 		z = self.encoder(x)
+		if is_partial:
+			z = z + self.ebm.sample_langevin(z)
 		x = self.decoder(z)
 		return x
 

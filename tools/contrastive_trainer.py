@@ -135,9 +135,15 @@ class TrainerVQVAEContrast(TrainerContrastive):
             sub_complete = self.complete_pc[:, :, subsample_idx_complete]
             sub_negative = negative_pc[:, :, subsample_idx_negative]"""
 
-            extended_complete = torch.cat([self.complete_pc, train_latent.expand(-1, -1, self.complete_pc.size(-1))], 1)
+            idx_complete = torch.randperm(self.complete_pc.size(-1))
+            random_complete = self.complete_pc[:, :, idx_complete]
+            # extended_complete = torch.cat([self.complete_pc, train_latent.expand(-1, -1, self.complete_pc.size(-1))], 1)
+            extended_complete = torch.cat([random_complete, train_latent.expand(-1, -1, self.complete_pc.size(-1))], 1)
             extended_complete = extended_complete.transpose(1, 2)
-            extended_negative = torch.cat([negative_pc, train_latent.expand(-1, -1, negative_pc.size(-1))], 1)
+            idx_negative = torch.randperm(negative_pc.size(-1))
+            random_negative = negative_pc[:, :, idx_negative]
+            # extended_negative = torch.cat([negative_pc, train_latent.expand(-1, -1, negative_pc.size(-1))], 1)
+            extended_negative = torch.cat([random_negative, train_latent.expand(-1, -1, negative_pc.size(-1))], 1)
             extended_negative = extended_negative.transpose(1, 2)
 
             # repeat anchor embedding to match other embedding sizes

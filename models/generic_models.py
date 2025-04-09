@@ -359,3 +359,50 @@ class PointNetEncoder(nn.Module):
         # critical_indexes = critical_indexes.view(bs, -1)
 
         return global_features  # critical_indexes, t_feature
+    
+
+class MLPConv(nn.Module):
+    """
+        1D Convolution based MLP mainly for Energy-Based Model EBM Module
+        Initialization Parameters:
+         - h_nodes: number of hidden nodes for each layer
+         - num_layers: number of internal layers in the MLP
+         - in_dim: input dimension of data
+         - out_dim: dimension of the resulting output
+         - nonlinear_layer: non-linearity added to the network layers (e.g. ReLU, softmax, ...)
+    """
+    def __init__(self, h_nodes, num_layers, in_dim, out_dim, nonlinear_layer=nn.GELU()):
+        super(MLPConv, self).__init__()
+        self.h_nodes = h_nodes
+        self.num_layers = num_layers
+        self.in_dim = in_dim
+        self.out_dim = out_dim
+        self.nonlinear_layer = nonlinear_layer
+
+        # creating the 1D Conv (fully connected) layers
+        model = [nn.Conv1d(self.in_dim, self.h_nodes, 1)]
+        for i in range(self.num_layers):
+            model.append(nn.Conv1d(self.h_nodes, self.h_nodes, 1))
+        model.append(nn.Conv1d(self.h_nodes, self.out_dim, 1))
+        self.model = nn.Sequential(*model)
+        self.direct_conv = nn.Conv1d(self.in_dim, self.out_dim, 1)
+
+        # initialize the weights
+        for i in range(len(model)):
+            nn.init.xavier_uniform_(self.model[i].weight)
+        nn.init.xavier_uniform_(self.direct_conv.weight)
+
+    def forward(self, x):
+        # get the direct convolution result
+        direct = self.direct_conv(x)
+        # pass input through first layer
+        x = self.nonlinear_layer(self.model[0](x))
+        # pass through internal layers
+        for i in range(1, self.num_layers+1):
+            x = self.nonlinear_layer(self.model[i](x))
+        # pass through last layer to get output (no activation on the last layer)
+        out = self.model[self.num_layers+1](x)
+        # add the direct convolution result to output
+        out = out + direct
+
+        return out
