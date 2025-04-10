@@ -47,7 +47,21 @@ class TrainerEBM(TrainerCommonEBM):
 		partial_latent = self.model.encode(partial_enc)
 		complete_latent = self.model.encode(complete_enc)
 
+		recon_complete = self.model(complete_enc, False)
+
 		self.latent_gen_list = []
 		for idx in range(self.z_samples):
+			if train:
+				latent_gen = self.model.ebm.sample_langevin(partial_latent)
+			else:
+				self.model.ebm.eval()
+				with torch.no_grad():
+					latent_gen = self.model.ebm.sample_langevin(partial_latent)
+			self.latent_gen_list.append(latent_gen)
+
+		if train:
+			latent_gen_list = torch.stack(self.latent_gen_list, 1)
+			# sample
+			latent_gen_nearest = gen_nearest_latents(self.dci_db, latent_gen_list, complete_latent)
 
 
