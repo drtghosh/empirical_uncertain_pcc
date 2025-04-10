@@ -46,3 +46,8 @@ class TrainerEBM(TrainerCommonEBM):
 
 		partial_latent = self.model.encode(partial_enc)
 		complete_latent = self.model.encode(complete_enc)
+
+		self.latent_gen_list = []
+		for idx in range(self.z_samples):
+
+

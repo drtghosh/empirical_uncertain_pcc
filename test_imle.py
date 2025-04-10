@@ -9,7 +9,39 @@ import os
 from tqdm import tqdm
 
 import numpy as np
+from scipy.optimize import linear_sum_assignment
+
 import cv2 as cv
+
+
+def naive_estimation(generated_clouds):
+    gen_mu = generated_clouds.mean(dim=0)
+    gen_std = generated_clouds.std(dim=0)
+    normalized_std = gen_std / gen_std.max()
+    intensity = torch.norm(normalized_std, dim=[1])
+    intensity = (intensity - intensity.min()) / (intensity.max() - intensity.min())
+    intensity = 255 - np.uint8(255 * intensity)
+    color_map = cv.applyColorMap(intensity, cv.COLORMAP_JET) / 255
+    color_map = np.squeeze(color_map)
+
+    return gen_mu, color_map
+
+
+def matching_estimation(generated_clouds, p=2):
+    for i in range(1, len(generated_clouds)):
+        cost_matrix = torch.cdist(generated_clouds[0], generated_clouds[i], p)
+        _, col_ind = linear_sum_assignment(cost_matrix.cpu().detach().numpy())
+        generated_clouds[i] = generated_clouds[i][col_ind, :]
+    gen_mu = generated_clouds.mean(dim=0)
+    gen_std = generated_clouds.std(dim=0)
+    normalized_std = gen_std / gen_std.max()
+    intensity = torch.norm(normalized_std, dim=[1])
+    intensity = (intensity - intensity.min()) / (intensity.max() - intensity.min())
+    intensity = 255 - np.uint8(255 * intensity)
+    color_map = cv.applyColorMap(intensity, cv.COLORMAP_JET) / 255
+    color_map = np.squeeze(color_map)
+
+    return gen_mu, color_map
 
 
 def test_imle_gen():
@@ -78,19 +110,21 @@ def test_imle_gen():
             point_cloud_list.append(gen_pc)
             titles.append(f'Generated Cloud {j}')
             colors.append('blue')
+
         # estimate confidence
-        gen_mu = gen_clouds.mean(dim=0)
-        gen_std = gen_clouds.std(dim=0)
-        normalized_std = gen_std / gen_std.max()
-        intensity = torch.norm(normalized_std, dim=[1])
-        intensity = (intensity - intensity.min()) / (intensity.max() - intensity.min())
-        intensity = 255 - np.uint8(255 * intensity)
-        color_map = cv.applyColorMap(intensity, cv.COLORMAP_JET) / 255
-        color_map = np.squeeze(color_map)
-        write_point_cloud_ply(gen_mu, os.path.join(pc_dir, 'gen_conf.ply'), True, color_map)
-        point_cloud_list.append(gen_mu.cpu().numpy())
-        titles.append('Averaged Cloud')
-        colors.append(color_map)
+        # naive estimation
+        gen_mu_naive, color_map_naive = naive_estimation(gen_clouds)
+        write_point_cloud_ply(gen_mu_naive, os.path.join(pc_dir, 'gen_conf_naive.ply'), True, color_map_naive)
+        point_cloud_list.append(gen_mu_naive.cpu().numpy())
+        titles.append('Index-wise Est. Cloud')
+        colors.append(color_map_naive)
+        # linear assignment estimation
+        gen_mu_matched, color_map_matched = matching_estimation(gen_clouds)
+        write_point_cloud_ply(gen_mu_matched, os.path.join(pc_dir, 'gen_conf_lin.ply'), True, color_map_matched)
+        point_cloud_list.append(gen_mu_matched.cpu().numpy())
+        titles.append('Lin. Assign. Est. Cloud')
+        colors.append(color_map_matched)
+
         plot_pcd_one_view(os.path.join(pc_dir, 'all.jpg'), point_cloud_list, titles, colors=colors)
 
 
