@@ -315,8 +315,8 @@ def plot_pcd_one_view(filename, pcds, titles, suptitle='', sizes=None, colors=No
         # color = pcd[:, 0]
         ax = fig.add_subplot(2, len(pcds) // 2, j + 1, projection='3d')
         ax.view_init(elev, azim)
-        # axes[j // 4, j % 4].scatter(..., vmin=-1.0, vmax=0.5)
-        ax.scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], zdir=zdir, c=colors[j], s=size, cmap='viridis')
+        # axes[j // 4, j % 4].scatter(..., cmap='viridis', vmin=-1.0, vmax=0.5)
+        ax.scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], zdir=zdir, c=colors[j], s=size)
         ax.set_title(titles[j])
         ax.set_axis_off()
         ax.set_xlim(xlim)
