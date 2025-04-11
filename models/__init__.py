@@ -3,7 +3,7 @@ from models.vae import VAE
 from models.vqvae import VQVAE
 from models.multimodal_imle import Generator
 from models.multimodal_ebm import EBMCompletion
-from models.generic_models import MLPBlock
+from models.generic_models import MLPBlock, MLPConv
 from models.model_utils import gen_nearest_latents
 
 

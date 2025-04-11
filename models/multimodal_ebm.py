@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from generic_models import MLPConv
+from .generic_models import MLPConv
 
 
 class EncoderPC(nn.Module):

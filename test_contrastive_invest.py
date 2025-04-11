@@ -87,7 +87,7 @@ def test_con():
                 fg.write(f"z axis: {spacing_c[2] * (grid_sizes_c[2] - 1)}\n")
 
             # output embedding for grid points
-            extended_grid = torch.cat([grid_data_c, trainer.test_latent.expand(-1, grid_data_c.size(1), -1)], 2)
+            extended_grid = torch.cat([grid_data, trainer.test_latent.expand(-1, grid_data.size(1), -1)], 2)
             trainer.model.eval()
             grid_embedding = trainer.model(extended_grid).flatten(0, 1)
 
@@ -169,6 +169,18 @@ def test_con():
                                                               level=0.0)
             # save mesh into .obj file
             write_mesh(os.path.join(pc_dir, 'mean.obj'), vertices, faces)
+
+            # standard deviation plus (1 time)
+            plus_std = shifted_mean + posterior_diag.cpu().numpy()
+            vertices_p, faces_p, normals_p, values_p = marching_cubes(np.reshape(plus_std, grid_sizes, order='F'),
+                                                              level=0.0)
+            write_mesh(os.path.join(pc_dir, 'std_plus.obj'), vertices_p, faces_p)
+
+            # standard deviation minus (1 time)
+            minus_std = shifted_mean - posterior_diag.cpu().numpy()
+            vertices_m, faces_m, normals_m, values_m = marching_cubes(np.reshape(minus_std, grid_sizes, order='F'),
+                                                                      level=0.0)
+            write_mesh(os.path.join(pc_dir, 'std_minus.obj'), vertices_m, faces_m)
 
 
 if __name__ == '__main__':
