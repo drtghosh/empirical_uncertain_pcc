@@ -306,8 +306,8 @@ def plot_pcd_one_view(filename, pcds, titles, suptitle='', sizes=None, colors=No
     titles = np.array(titles)[selected_gen]
     colors = [colors[i] for i in selected_gen]
     if sizes is None:
-        sizes = [0.75] * len(pcds)
-    fig = plt.figure(figsize=(len(pcds) * 3 * 1.4, 3 * 1.4))
+        sizes = [0.5] * len(pcds)
+    fig = plt.figure(figsize=((len(pcds) // 2) * 3 * 1.4, 3 * 1.4))
     # fig, axes = plt.subplots(2, 4)
     elev = 30
     azim = -45
