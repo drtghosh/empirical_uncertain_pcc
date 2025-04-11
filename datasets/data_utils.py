@@ -214,8 +214,8 @@ def create_negative_with_normal(path):
     points = np.array(point_cloud.points)
     normals = np.array(point_cloud.normals)
     negative_data = np.empty(points.shape)
-    random_distance = np.random.randn(len(points))
-    random_distance[np.abs(random_distance) < 0.01] = np.random.choice([-1, 1])
+    random_distance = np.random.uniform(0.05, 0.5, len(points))
+    # random_distance[np.abs(random_distance) < 0.01] = np.random.choice([-1, 1])
     for p in range(len(normals)):
         negative_data[p] = points[p] + random_distance[p] * normals[p]
 
