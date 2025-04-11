@@ -161,23 +161,28 @@ def test_con():
                 grid_posterior_var[i * config.gp_batch: (i + 1) * config.gp_batch] = posterior_diag
 
             # shift posterior mean
-            W = fd_interpolate(partial_points, grid_sizes_c, spacing_c, corner_c)
+            W = fd_interpolate(partial_points, grid_sizes, spacing, corner)
             shift = np.sum(W @ grid_posterior_mean.cpu().numpy()) / partial_points.shape[0]
             shifted_mean = grid_posterior_mean.cpu().numpy() - shift
             # marching cubes
             vertices, faces, normals, values = marching_cubes(np.reshape(shifted_mean, grid_sizes, order='F'),
                                                               level=0.0)
             # save mesh into .obj file
-            write_mesh(os.path.join(pc_dir, 'mean.obj'), vertices, faces)
+            write_mesh(os.path.join(pc_dir, 'mean_shifted.obj'), vertices, faces)
+
+            # without mean shifting
+            vertices_og, faces_og, normals_og, values_og = marching_cubes(
+                np.reshape(grid_posterior_mean.cpu().numpy(), grid_sizes, order='F'), level=0.0)
+            write_mesh(os.path.join(pc_dir, 'mean_og.obj'), vertices_og, faces_og)
 
             # standard deviation plus (1 time)
-            plus_std = shifted_mean + posterior_diag.cpu().numpy()
+            plus_std = shifted_mean + grid_posterior_var.cpu().numpy()
             vertices_p, faces_p, normals_p, values_p = marching_cubes(np.reshape(plus_std, grid_sizes, order='F'),
                                                               level=0.0)
             write_mesh(os.path.join(pc_dir, 'std_plus.obj'), vertices_p, faces_p)
 
             # standard deviation minus (1 time)
-            minus_std = shifted_mean - posterior_diag.cpu().numpy()
+            minus_std = shifted_mean - grid_posterior_var.cpu().numpy()
             vertices_m, faces_m, normals_m, values_m = marching_cubes(np.reshape(minus_std, grid_sizes, order='F'),
                                                                       level=0.0)
             write_mesh(os.path.join(pc_dir, 'std_minus.obj'), vertices_m, faces_m)
