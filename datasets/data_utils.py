@@ -313,14 +313,16 @@ def plot_pcd_one_view(filename, pcds, titles, suptitle='', sizes=None, colors=No
     azim = -45
     for j, (pcd, size) in enumerate(zip(pcds, sizes)):
         # color = pcd[:, 0]
-        ax = fig.add_subplot(1, len(pcds), j + 1, projection='3d')
-        ax.view_init(elev, azim)
-        ax.scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], zdir=zdir, c=colors[j], s=size, cmap='viridis', vmin=-1.0, vmax=0.5)
-        ax.set_title(titles[j])
-        ax.set_axis_off()
-        ax.set_xlim(xlim)
-        ax.set_ylim(ylim)
-        ax.set_zlim(zlim)
+        axes[j // 4, j % 4] = fig.add_subplot(1, len(pcds), j + 1, projection='3d')
+        axes[j // 4, j % 4].view_init(elev, azim)
+        # axes[j // 4, j % 4].scatter(..., vmin=-1.0, vmax=0.5)
+        axes[j // 4, j % 4].scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], zdir=zdir, c=colors[j], s=size, cmap='viridis',
+                                    vmin=-1.0, vmax=0.5)
+        axes[j // 4, j % 4].set_title(titles[j])
+        axes[j // 4, j % 4].set_axis_off()
+        axes[j // 4, j % 4].set_xlim(xlim)
+        axes[j // 4, j % 4].set_ylim(ylim)
+        axes[j // 4, j % 4].set_zlim(zlim)
     plt.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.9, wspace=0.1, hspace=0.1)
     plt.suptitle(suptitle)
     fig.savefig(filename)
