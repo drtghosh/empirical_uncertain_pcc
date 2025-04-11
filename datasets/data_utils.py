@@ -301,7 +301,7 @@ def create_negative_with_label(point_cloud_tensor, distance=1):
 def plot_pcd_one_view(filename, pcds, titles, suptitle='', sizes=None, colors=None, zdir='y', xlim=(-0.5, 0.5),
                       ylim=(-0.5, 0.5), zlim=(-0.5, 0.5)):
     selected_gen = np.random.randint(2, len(pcds)-2, 4)
-    selected_gen = np.concatenate(([0, 1], len(pcds) - [2, 1], selected_gen))
+    selected_gen = np.concatenate(([0, 1], [len(pcds) - 2, len(pcds) - 1], selected_gen))
     pcds = [pcds[i] for i in selected_gen]
     titles = np.array(titles)[selected_gen]
     colors = [colors[i] for i in selected_gen]

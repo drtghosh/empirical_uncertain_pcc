@@ -14,9 +14,11 @@ class TrainerEBM(TrainerCommonEBM):
 		self.complete_pc = None
 		self.data_id = None
 		self.latent_gen_loss = None
+		self.fidelity_loss = None
 		self.reconstruction_loss = None
-		self.recon_weight = config.recon_weight
-		self.latent_gen_weight = config.latent_gen_weight
+		self.recon_weight = config.recon_weight_ebm
+		self.fidelity_weight = config.fidelity_weight_ebm
+		self.latent_gen_weight = config.latent_gen_weight_ebm
 		self.z_dim = config.noise_dim
 		if config.is_train:
 			self.z_samples = config.gen_samples_train
@@ -48,6 +50,11 @@ class TrainerEBM(TrainerCommonEBM):
 		complete_latent = self.model.encode(complete_enc)
 
 		recon_complete = self.model(complete_enc, False)
+		if train:
+			#compute reconstruction loss
+			emd_dis, assignment = self.criterionRecon(recon_complete.transpose(1, 2), self.complete_pc.transpose(1, 2),
+													  0.05, 3000)
+			self.reconstruction_loss = self.recon_weight * torch.mean(torch.sqrt(emd_dis))
 
 		self.latent_gen_list = []
 		for idx in range(self.z_samples):
@@ -63,5 +70,9 @@ class TrainerEBM(TrainerCommonEBM):
 			latent_gen_list = torch.stack(self.latent_gen_list, 1)
 			# sample
 			latent_gen_nearest = gen_nearest_latents(self.dci_db, latent_gen_list, complete_latent)
+			self.gen_pc = self.model.decode(latent_gen_nearest)
 
+			# compute latent and fidelity loss
+			self.latent_gen_loss = self.latent_gen_weight * self.criterionLatent(latent_gen_nearest, complete_latent)
+			self.fidelity_loss = self.fidelity_weight * ldf(self.partial_pc, self.gen_pc)
 
