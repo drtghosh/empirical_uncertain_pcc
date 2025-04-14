@@ -1,7 +1,6 @@
 import torch
-from models import get_model, set_requires_grad, gen_nearest_latents
+from models import get_model, gen_nearest_latents
 from tools.base_trainer import TrainerCommonEBM
-from torch.distributions import normal
 from dciknn_cuda import DCI
 from metrics.EMD import emd
 from metrics import ldf
@@ -19,12 +18,11 @@ class TrainerEBM(TrainerCommonEBM):
 		self.recon_weight = config.recon_weight_ebm
 		self.fidelity_weight = config.fidelity_weight_ebm
 		self.latent_gen_weight = config.latent_gen_weight_ebm
-		self.z_dim = config.noise_dim
+		self.energy_reg_weight = config.regularization_weight_ebm
 		if config.is_train:
 			self.z_samples = config.gen_samples_train
 		else:
 			self.z_samples = config.gen_samples_test
-		self.z_sampler = normal.Normal(0, 1)
 		self.latent_gen_list = []
 		# dci_db = DCI(dim, num_comp_indices, num_simp_indices, block_size, thread_size, devices=[0, 1])
 		self.dci_db = DCI(config.latent_dim, 2, 10, 100, 10)
@@ -50,29 +48,74 @@ class TrainerEBM(TrainerCommonEBM):
 		complete_latent = self.model.encode(complete_enc)
 
 		recon_complete = self.model(complete_enc, False)
+
+		# to store the generated latent encodings for complete cloud
+		self.latent_gen_list = []
+
 		if train:
-			#compute reconstruction loss
+			# compute reconstruction loss
 			emd_dis, assignment = self.criterionRecon(recon_complete.transpose(1, 2), self.complete_pc.transpose(1, 2),
-													  0.05, 3000)
+													0.05, 3000)
 			self.reconstruction_loss = self.recon_weight * torch.mean(torch.sqrt(emd_dis))
 
-		self.latent_gen_list = []
-		for idx in range(self.z_samples):
-			if train:
+			# collect generated latent encodings
+			for idx in range(self.z_samples):
 				latent_gen = self.model.ebm.sample_langevin(partial_latent)
-			else:
+				self.latent_gen_list.append(latent_gen)
+				latent_gen_list = torch.stack(self.latent_gen_list, 1)
+				# sample closest to gt encoding
+				latent_gen_nearest = gen_nearest_latents(self.dci_db, latent_gen_list, complete_latent)
+				self.gen_pc = self.model.decode(latent_gen_nearest)
+
+				# compute latent and fidelity loss
+				self.latent_gen_loss = self.latent_gen_weight * self.criterionLatent(latent_gen_nearest,
+																					complete_latent)
+				self.fidelity_loss = self.fidelity_weight * ldf(self.partial_pc, self.gen_pc)
+				# add up to get encoder decoder loss
+				self.encoder_decoder_loss = self.reconstruction_loss + self.fidelity_loss + self.latent_gen_loss
+
+				# compute ebm loss
+				latent_energy = self.model.ebm.get_energy(latent_gen_nearest)
+				gt_energy = self.model.ebm.get_energy(complete_latent)
+				regularization_term = self.energy_reg_weight * (gt_energy ** 2 + latent_energy ** 2).mean()
+				self.ebm_loss = (gt_energy.mean() - latent_energy.mean) + regularization_term
+		else:
+			for idx in range(self.z_samples):
 				self.model.ebm.eval()
 				with torch.no_grad():
 					latent_gen = self.model.ebm.sample_langevin(partial_latent)
-			self.latent_gen_list.append(latent_gen)
+				self.latent_gen_list.append(latent_gen)
 
-		if train:
-			latent_gen_list = torch.stack(self.latent_gen_list, 1)
-			# sample
-			latent_gen_nearest = gen_nearest_latents(self.dci_db, latent_gen_list, complete_latent)
-			self.gen_pc = self.model.decode(latent_gen_nearest)
+	def collect_loss(self):
+		loss_dict = {
+			"gt_recon": self.reconstruction_loss,
+			"part_fidelity": self.fidelity_loss,
+			"imle": self.latent_gen_loss,
+			"coder_loss": self.encoder_decoder_loss,
+			"energy_loss": self.ebm_loss
+		}
+		return loss_dict
 
-			# compute latent and fidelity loss
-			self.latent_gen_loss = self.latent_gen_weight * self.criterionLatent(latent_gen_nearest, complete_latent)
-			self.fidelity_loss = self.fidelity_weight * ldf(self.partial_pc, self.gen_pc)
+	def update_models(self):
+		# update encoder decoder
+		self.optimizer_ed.zero_grad()
+		self.encoder_decoder_loss.backward()
+		self.optimizer_ed.step()
 
+		# update energy model
+		self.optimizer_ebm.zero_grad()
+		self.ebm_loss.backward()
+		self.optimizer_ebm.step()
+
+	def visualize_batch(self, data, mode, num=2, **kwargs):
+		tbw = self.train_tbw if mode == 'train' else self.val_tbw
+
+		target_pts = data['gt_points'][:num].transpose(1, 2).detach().cpu().numpy()
+		partial_pts = data['partial_points'][:num].transpose(1, 2).detach().cpu().numpy()
+		generated_pts = self.gen_pc[:num].transpose(1, 2).detach().cpu().numpy()
+
+		# generated_pts = np.clip(generated_pts, -0.999, 0.999)
+
+		tbw.add_mesh("gt", vertices=target_pts, global_step=self.watcher.step)
+		tbw.add_mesh("partial", vertices=partial_pts, global_step=self.watcher.step)
+		tbw.add_mesh("generated", vertices=generated_pts, global_step=self.watcher.step)

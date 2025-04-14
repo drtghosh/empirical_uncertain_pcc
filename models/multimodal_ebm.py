@@ -125,8 +125,8 @@ class EBM(nn.Module):
 				dynamics = self.step_size * grad + noise
 				z = z + dynamics
 		z1 = z
-		r = z1 - z0
-		return r.detach()
+		# r = z1 - z0
+		return z1.detach()
 
 	def forward(self, x):
 		return self.model(x).squeeze(-1)

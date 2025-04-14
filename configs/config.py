@@ -104,7 +104,8 @@ class Config(object):
                            help="Path to directory where experiment logs/models will be saved")
         group.add_argument('-d', '--device', type=str, default='cuda:0', help='Device for training/ inference')
         group.add_argument('-m', '--module', type=str,
-                           choices=['ae', 'vae', 'vqvae', 'c_gan', 'imle_gen', 'contrast_ae', 'contrast_vqvae', 'contrast_all_ae'],
+                           choices=['ae', 'vae', 'vqvae', 'c_gan', 'imle_gen', 'contrast_ae', 'contrast_vqvae',
+                                    'contrast_all_ae'],
                            required=True, help="Choice of the model to be used")
 
     @staticmethod
@@ -151,6 +152,12 @@ class Config(object):
         group.add_argument('--latent_gen_weight', type=float, default=5.0)
         group.add_argument('--recon_weight', type=float, default=6.0)
         group.add_argument('--gen_samples_train', type=int, default=20)
+
+        # energy based model
+        group.add_argument('--recon_weight_ebm', type=float, default=1.0)
+        group.add_argument('--fidelity_weight_ebm', type=float, default=2.0)
+        group.add_argument('--latent_gen_weight_ebm', type=float, default=1.0)
+        group.add_argument('--regularization_weight_ebm', type=float, default=0.1)
 
         # contrastive encoder
         self.mlp_nodes = 32
