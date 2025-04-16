@@ -606,7 +606,7 @@ class TrainerContrastive(object):
 		# set loss function and related stuff
 		self.loss_criterion = None
 		self.criterionContrast = None
-		self.set_loss_function()
+		self.set_loss_function(config)
 		self.loss_batch = config.loss_batch
 
 		# set optimizer

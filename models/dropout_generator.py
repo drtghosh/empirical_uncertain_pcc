@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 
 
@@ -12,15 +11,15 @@ def weights_init(m):
 		m.bias.data.fill_(0)
 
 
-class Generator(nn.Module):
+class GeneratorDrop(nn.Module):
 	def __init__(self, config):
-		super(Generator, self).__init__()
+		super(GeneratorDrop, self).__init__()
 		self.n_features = list(config.n_features_gen) + [config.latent_dim]
 		self.latent_dim = config.latent_dim
 		self.noise_dim = config.noise_dim
 
 		model = []
-		prev_nf = config.latent_dim + config.noise_dim
+		prev_nf = config.latent_dim
 		for idx, nf in enumerate(self.n_features):
 			fc_layer = nn.Linear(prev_nf, nf)
 			model.append(fc_layer)
@@ -39,8 +38,7 @@ class Generator(nn.Module):
 
 		self.apply(weights_init)
 
-	def forward(self, x, noise):
-		x = torch.cat([x, noise], dim=1)
+	def forward(self, x):
 		x = self.model(x)
 		return x
 
