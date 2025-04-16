@@ -604,6 +604,7 @@ class TrainerContrastive(object):
 		self.model = self.build_model(config)
 
 		# set loss function and related stuff
+		self.loss_criterion = None
 		self.criterionContrast = None
 		self.set_loss_function()
 		self.loss_batch = config.loss_batch
