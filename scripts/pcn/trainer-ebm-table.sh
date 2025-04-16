@@ -1,0 +1,12 @@
+python train_ebm.py -l proj_log_ebm \
+                    -x pcn_table_ebm \
+                    -m ebm_gen \
+                    -n pcn \
+                    -r data/PCN \
+                    -c table \
+                    -b 16 \
+                    --lr 1e-3 \
+                    --lr_decay 0.95 \
+                    --save_frequency 10 \
+                    -e 10 \
+                    --vis

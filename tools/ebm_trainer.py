@@ -43,16 +43,15 @@ class TrainerEBM(TrainerCommonEBM):
 		partial_enc = data['partial_encoded'].to(self.device)
 		self.complete_pc = data['gt_points'].to(self.device)
 		complete_enc = data['gt_encoded'].to(self.device)
-
-		partial_latent = self.model.encode(partial_enc)
-		complete_latent = self.model.encode(complete_enc)
-
-		recon_complete = self.model(complete_enc, False)
-
 		# to store the generated latent encodings for complete cloud
 		self.latent_gen_list = []
 
 		if train:
+			partial_latent = self.model.encode(partial_enc)
+			complete_latent = self.model.encode(complete_enc)
+			# reconstruct complete cloud
+			recon_complete = self.model.decode(complete_latent)
+
 			# compute reconstruction loss
 			emd_dis, assignment = self.criterionRecon(recon_complete.transpose(1, 2), self.complete_pc.transpose(1, 2),
 													0.05, 3000)
@@ -60,31 +59,34 @@ class TrainerEBM(TrainerCommonEBM):
 
 			# collect generated latent encodings
 			for idx in range(self.z_samples):
-				latent_gen = self.model.ebm.sample_langevin(partial_latent)
+				latent_gen = self.model.ebm.sample_langevin(partial_latent.unsqueeze(-1))
 				self.latent_gen_list.append(latent_gen)
-				latent_gen_list = torch.stack(self.latent_gen_list, 1)
-				# sample closest to gt encoding
-				latent_gen_nearest = gen_nearest_latents(self.dci_db, latent_gen_list, complete_latent)
-				self.gen_pc = self.model.decode(latent_gen_nearest)
+			latent_gen_list = torch.stack(self.latent_gen_list, 1)
 
-				# compute latent and fidelity loss
-				self.latent_gen_loss = self.latent_gen_weight * self.criterionLatent(latent_gen_nearest,
-																					complete_latent)
-				self.fidelity_loss = self.fidelity_weight * ldf(self.partial_pc, self.gen_pc)
-				# add up to get encoder decoder loss
-				self.encoder_decoder_loss = self.reconstruction_loss + self.fidelity_loss + self.latent_gen_loss
+			# sample closest to gt encoding
+			latent_gen_nearest = gen_nearest_latents(self.dci_db, latent_gen_list, complete_latent)
+			self.gen_pc = self.model.decode(latent_gen_nearest.squeeze(-1))
 
-				# compute ebm loss
-				latent_energy = self.model.ebm.get_energy(latent_gen_nearest)
-				gt_energy = self.model.ebm.get_energy(complete_latent)
-				regularization_term = self.energy_reg_weight * (gt_energy ** 2 + latent_energy ** 2).mean()
-				self.ebm_loss = (gt_energy.mean() - latent_energy.mean) + regularization_term
+			# compute latent and fidelity loss
+			self.latent_gen_loss = self.latent_gen_weight * self.criterionLatent(latent_gen_nearest.squeeze(-1),
+																				complete_latent)
+			self.fidelity_loss = self.fidelity_weight * ldf(self.partial_pc, self.gen_pc)
+			# add up to get encoder decoder loss
+			self.encoder_decoder_loss = self.reconstruction_loss + self.fidelity_loss + self.latent_gen_loss
+
+			# compute ebm loss
+			latent_energy = self.model.ebm.get_energy(latent_gen_nearest)
+			gt_energy = self.model.ebm.get_energy(complete_latent.unsqueeze(-1))
+			regularization_term = self.energy_reg_weight * (gt_energy ** 2 + latent_energy ** 2).mean()
+			self.ebm_loss = (gt_energy.mean() - latent_energy.mean()) + regularization_term
 		else:
-			for idx in range(self.z_samples):
-				self.model.ebm.eval()
-				with torch.no_grad():
-					latent_gen = self.model.ebm.sample_langevin(partial_latent)
-				self.latent_gen_list.append(latent_gen)
+			self.model.eval()
+			with torch.no_grad():
+				partial_latent = self.model.encode(partial_enc)
+				for idx in range(self.z_samples):
+					# self.model.ebm.eval()
+					latent_gen = self.model.ebm.sample_langevin(partial_latent.unsqueeze(-1))
+					self.latent_gen_list.append(latent_gen) # squeeze(-1)
 
 	def collect_loss(self):
 		loss_dict = {
@@ -97,15 +99,18 @@ class TrainerEBM(TrainerCommonEBM):
 		return loss_dict
 
 	def update_models(self):
+		# update energy model
+		self.model.zero_grad()
+		self.model.encoder.eval()
+		self.model.decoder.eval()
+		self.ebm_loss.backward(retain_graph=True)
+		self.optimizer_ebm.step()
+
 		# update encoder decoder
-		self.optimizer_ed.zero_grad()
+		self.model.zero_grad()
+		self.model.ebm.eval()
 		self.encoder_decoder_loss.backward()
 		self.optimizer_ed.step()
-
-		# update energy model
-		self.optimizer_ebm.zero_grad()
-		self.ebm_loss.backward()
-		self.optimizer_ebm.step()
 
 	def visualize_batch(self, data, mode, num=2, **kwargs):
 		tbw = self.train_tbw if mode == 'train' else self.val_tbw

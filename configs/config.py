@@ -104,8 +104,8 @@ class Config(object):
                            help="Path to directory where experiment logs/models will be saved")
         group.add_argument('-d', '--device', type=str, default='cuda:0', help='Device for training/ inference')
         group.add_argument('-m', '--module', type=str,
-                           choices=['ae', 'vae', 'vqvae', 'c_gan', 'imle_gen', 'contrast_ae', 'contrast_vqvae',
-                                    'contrast_all_ae'],
+                           choices=['ae', 'vae', 'vqvae', 'c_gan', 'imle_gen', 'ebm_gen', 'contrast_ae',
+                                    'contrast_vqvae', 'contrast_all_ae'],
                            required=True, help="Choice of the model to be used")
 
     @staticmethod
@@ -154,15 +154,20 @@ class Config(object):
         group.add_argument('--gen_samples_train', type=int, default=20)
 
         # energy based model
+        group.add_argument('--step_size', type=float, default=0.05)
+        group.add_argument('--n_step', type=int, default=8)
+        group.add_argument('--noise_scale', type=float, default=0.0001)
         group.add_argument('--recon_weight_ebm', type=float, default=1.0)
         group.add_argument('--fidelity_weight_ebm', type=float, default=2.0)
         group.add_argument('--latent_gen_weight_ebm', type=float, default=1.0)
         group.add_argument('--regularization_weight_ebm', type=float, default=0.1)
 
-        # contrastive encoder
+        # contrastive learning
         self.mlp_nodes = 32
         self.mlp_layers = 2
         group.add_argument('--contrast_dim', type=int, default=16)
+        group.add_argument('--loss_contrastive', type=str, choices=['triplet', 'spacetime'], default='triplet')
+        group.add_argument('--triplet_margin', type=float, default=0.1)
         group.add_argument('--loss_batch', type=int, default=512)
 
     @staticmethod
@@ -174,7 +179,11 @@ class Config(object):
         group.add_argument('-e', '--num_epochs', type=int, default=1000, help="Epochs of training")
         group.add_argument('--lr', type=float, default=5e-4, help="Initial learning rate")
         group.add_argument('--lr_decay', type=float, default=0.9995, help="Step size for learning rate decay")
+        group.add_argument('--decay_step', type=int, default=21, help="Decay steps for the LambdaLR scheduler")
+        group.add_argument('--lowest_decay', type=float, default=0.02, help="Lowest decay for the LambdaLR scheduler")
         group.add_argument('--beta1_gen', type=float, default=0.5, help="beta1 for Adam when training generator")
+        group.add_argument('--beta1_ed', type=float, default=0.9, help="beta1 for Adam when training ebm En/Decoder")
+        group.add_argument('--beta1_ebm', type=float, default=0.9, help="beta1 for Adam when training ebm module")
         group.add_argument('--beta1_con', type=float, default=0.9, help="beta1 for Adam in contrastive learning")
         group.add_argument('--continue', dest='cont', action='store_true', help="Continue training from checkpoint")
         group.add_argument('--ckpt', type=str, default='latest', required=False, help="Desired checkpoint to restore")

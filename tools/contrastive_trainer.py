@@ -7,6 +7,9 @@ from metrics import Triplet, lacc
 class TrainerAEContrast(TrainerContrastive):
     def __init__(self, config):
         super(TrainerAEContrast, self).__init__(config)
+        self.loss_criterion = config.loss_contrastive
+        if self.loss_criterion == 'triplet':
+            self.margin = config.triplet_margin
         self.partial_pc = None
         self.complete_pc = None
         self.data_id = None
@@ -32,7 +35,8 @@ class TrainerAEContrast(TrainerContrastive):
         return contrastive_encoder
 
     def set_loss_function(self):
-        self.criterionContrast = Triplet()
+        if self.loss_criterion == 'triplet':
+            self.criterionContrast = Triplet(margin=self.margin)
 
     def forward(self, data, train=True):
         self.data_id = data['id']
@@ -47,7 +51,7 @@ class TrainerAEContrast(TrainerContrastive):
         extended_anchor = torch.cat([self.partial_pc, train_latent.expand(-1, -1, self.partial_pc.size(-1))], 1)
         extended_anchor = extended_anchor.transpose(1, 2)
         if train:
-            negative_pc = data['negative_points'].to(self.device)
+            """negative_pc = data['negative_points'].to(self.device)
             anchor_embedding = self.model(extended_anchor).flatten(0, 1)
             idx_complete = torch.randperm(self.complete_pc.size(-1))
             subsample_idx_complete = idx_complete[:extended_anchor.size(1)]
@@ -64,7 +68,28 @@ class TrainerAEContrast(TrainerContrastive):
             positive_embedding = self.model(extended_complete).flatten(0, 1)
             negative_embedding = self.model(extended_negative).flatten(0, 1)
             self.loss = lacc(anchor_embedding, positive_embedding, negative_embedding, self.loss_batch,
-                         self.criterionContrast)
+                         self.criterionContrast)"""
+            negative_pc = data['negative_points'].to(self.device)
+            batched_anchor_embedding = self.model(extended_anchor)
+
+            idx_complete = torch.randperm(self.complete_pc.size(-1))
+            random_complete = self.complete_pc[:, :, idx_complete]
+            # extended_complete = torch.cat([self.complete_pc, train_latent.expand(-1, -1, self.complete_pc.size(-1))], 1)
+            extended_complete = torch.cat([random_complete, train_latent.expand(-1, -1, self.complete_pc.size(-1))], 1)
+            extended_complete = extended_complete.transpose(1, 2)
+            idx_negative = torch.randperm(negative_pc.size(-1))
+            random_negative = negative_pc[:, :, idx_negative]
+            # extended_negative = torch.cat([negative_pc, train_latent.expand(-1, -1, negative_pc.size(-1))], 1)
+            extended_negative = torch.cat([random_negative, train_latent.expand(-1, -1, negative_pc.size(-1))], 1)
+            extended_negative = extended_negative.transpose(1, 2)
+
+            # repeat anchor embedding to match other embedding sizes
+            anchor_embedding = batched_anchor_embedding.repeat(1, self.complete_pc.size(-1) // self.partial_pc.size(-1),
+                                                               1).flatten(0, 1)
+            positive_embedding = self.model(extended_complete).flatten(0, 1)
+            negative_embedding = self.model(extended_negative).flatten(0, 1)
+            self.loss = lacc(anchor_embedding, positive_embedding, negative_embedding, self.loss_batch,
+                             self.criterionContrast)
         else:
             self.model.eval()
             with torch.no_grad():
@@ -85,7 +110,10 @@ class TrainerAEContrast(TrainerContrastive):
 
 class TrainerVQVAEContrast(TrainerContrastive):
     def __init__(self, config):
-        super(TrainerVQVAEContrast, self).__init__(config)
+        super(TrainerVQVAEContrast, self).__init__(config)#
+        self.loss_criterion = config.loss_contrastive
+        if self.loss_criterion == 'triplet':
+            self.margin = config.triplet_margin
         self.partial_pc = None
         self.complete_pc = None
         self.data_id = None
@@ -111,7 +139,8 @@ class TrainerVQVAEContrast(TrainerContrastive):
         return contrastive_encoder
 
     def set_loss_function(self):
-        self.criterionContrast = Triplet()
+        if self.loss_criterion == 'triplet':
+            self.criterionContrast = Triplet(margin=self.margin)
 
     def forward(self, data, train=True):
         self.data_id = data['id']

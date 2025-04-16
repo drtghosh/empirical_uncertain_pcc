@@ -459,15 +459,20 @@ class TrainerCommonEBM(object):
 			set optimizer used in training
 		"""
 		self.base_lr = config.lr
-		self.optimizer_ed = optim.Adam(self.model.parameters(), config.lr, betas=(config.beta1_ed, 0.999))
-		self.optimizer_ebm = optim.Adam(self.model.parameters(), config.lr, betas=(config.beta1_ebm, 0.999))
+		self.optimizer_ed = optim.Adam(list(self.model.encoder.parameters()) + list(self.model.decoder.parameters()),
+									   config.lr, betas=(config.beta1_ed, 0.999))
+		self.optimizer_ebm = optim.Adam(self.model.ebm.parameters(), config.lr, betas=(config.beta1_ebm, 0.999))
 
 	def set_scheduler(self, config):
 		"""
 			set optimizer used in training
 		"""
-		self.scheduler_ed = optim.lr_scheduler.LambdaLR(self.optimizer_ed, config.lr_decay)
-		self.scheduler_ebm = optim.lr_scheduler.LambdaLR(self.optimizer_ebm, config.lr_decay)
+		if config.decay_step is not None:
+			lr_lamb = lambda e: max(config.lr_decay ** (e / config.decay_step), config.lowest_decay)
+		else:
+			raise NotImplementedError()
+		self.scheduler_ed = optim.lr_scheduler.LambdaLR(self.optimizer_ed, lr_lamb)
+		self.scheduler_ebm = optim.lr_scheduler.LambdaLR(self.optimizer_ebm, lr_lamb)
 
 	def save_ckpt(self, name=None):
 		"""
@@ -522,7 +527,7 @@ class TrainerCommonEBM(object):
 
 	def update_models(self):
 		"""
-			update network by back propagation
+			update models by back propagation
 		"""
 		raise NotImplementedError
 
