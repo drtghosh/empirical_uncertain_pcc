@@ -8,7 +8,7 @@ class TrainerAEContrast(TrainerContrastive):
     def __init__(self, config):
         super(TrainerAEContrast, self).__init__(config)
         self.loss_criterion = config.loss_contrastive
-        if self.loss_criterion == 'triplet':
+        if config.loss_contrastive == 'triplet':
             self.margin = config.triplet_margin
         self.partial_pc = None
         self.complete_pc = None
@@ -112,7 +112,7 @@ class TrainerVQVAEContrast(TrainerContrastive):
     def __init__(self, config):
         super(TrainerVQVAEContrast, self).__init__(config)#
         self.loss_criterion = config.loss_contrastive
-        if self.loss_criterion == 'triplet':
+        if config.loss_contrastive == 'triplet':
             self.margin = config.triplet_margin
         self.partial_pc = None
         self.complete_pc = None
