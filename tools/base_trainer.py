@@ -628,7 +628,7 @@ class TrainerContrastive(object):
 	def build_model(self, config):
 		raise NotImplementedError
 
-	def set_loss_function(self):
+	def set_loss_function(self, config):
 		"""
 			set loss function used in training
 		"""

@@ -34,9 +34,9 @@ class TrainerAEContrast(TrainerContrastive):
         contrastive_encoder = get_model(config, "blockMLP").to(self.device)
         return contrastive_encoder
 
-    def set_loss_function(self):
-        if self.loss_criterion == 'triplet':
-            self.criterionContrast = Triplet(margin=self.margin)
+    def set_loss_function(self, config):
+        if config.loss_contrastive == 'triplet':
+            self.criterionContrast = Triplet(margin=config.triplet_margin)
 
     def forward(self, data, train=True):
         self.data_id = data['id']
@@ -138,9 +138,9 @@ class TrainerVQVAEContrast(TrainerContrastive):
         contrastive_encoder = get_model(config, "blockMLP").to(self.device)
         return contrastive_encoder
 
-    def set_loss_function(self):
-        if self.loss_criterion == 'triplet':
-            self.criterionContrast = Triplet(margin=self.margin)
+    def set_loss_function(self, config):
+        if config.loss_contrastive == 'triplet':
+            self.criterionContrast = Triplet(margin=config.triplet_margin)
 
     def forward(self, data, train=True):
         self.data_id = data['id']
