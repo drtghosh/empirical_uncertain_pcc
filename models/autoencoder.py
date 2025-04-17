@@ -101,7 +101,7 @@ class PointAE(nn.Module):
 	def __init__(self, config):
 		super(PointAE, self).__init__()
 		self.encoder = EncoderPC(config.enc_features, config.latent_dim, config.res_layers, config.enc_norm, config.space_dim)
-		self.decoder = DecoderFC(config.dec_features, config.latent_dim, config.n_pts, config.dec_norm, config.space_dim)
+		self.decoder = DecoderFC(config.dec_features, config.latent_dim, config.out_pts, config.dec_norm, config.space_dim)
 
 	def encode(self, x):
 		return self.encoder(x)

@@ -139,7 +139,7 @@ class EBMCompletion(nn.Module):
 	def __init__(self, config):
 		super(EBMCompletion, self).__init__()
 		self.encoder = EncoderPC(config.enc_features, config.latent_dim, config.res_layers, config.enc_norm, config.space_dim)
-		self.decoder = DecoderFC(config.dec_features, config.latent_dim, config.n_pts, config.dec_norm, config.space_dim)
+		self.decoder = DecoderFC(config.dec_features, config.latent_dim, config.out_pts, config.dec_norm, config.space_dim)
 		self.ebm = EBM(config.latent_dim, config.step_size, config.n_step, config.noise_scale)
 
 	def encode(self, x):
