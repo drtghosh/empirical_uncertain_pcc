@@ -121,8 +121,9 @@ class Config(object):
         group.add_argument('-b', '--batch_size', type=int, default=8, help="Batch size for data loader")
         group.add_argument('-c', '--category', type=str, default="all", help="Shape category name")
         group.add_argument('-w', '--num_workers', type=int, default=8, help="Number of workers for data loader")
-        group.add_argument('-p', '--n_pts', type=int, default=2048,
-                           help="Number of points sampled for complete shape. Half of it for partial shape")
+        group.add_argument('-p', '--n_pts', type=int, default=2048, help="Number of points sampled for complete shape. "
+                                                                         "Half for partial if not specified otherwise")
+        group.add_argument('--partial_pts', type=int, help="Number of points sampled for partial shape")
 
     def _add_model_config_(self, parser):
         """

@@ -14,13 +14,16 @@ def get_dataloader_pcn(split, config):
     is_shuffle = (split == 'train')
 
     if config.module == "c_gan" or config.module == 'imle_gen' or config.module == 'ebm_gen':
-        dataset = PCNGen(split, config.data_root, config.category, 'complete', 'partial', config.n_pts)
+        dataset = PCNGen(split, config.data_root, config.category, 'complete', 'partial', config.n_pts,
+                         config.partial_pts)
     elif config.module == "ae" or config.module == "vae" or config.module == "vqvae":
         dataset = PCNAE(split, config.data_root, config.category, 'complete', config.n_pts)
     elif config.module == "contrast_ae" or config.module == "contrast_vae" or config.module == "contrast_vqvae":
-        dataset = PCNCon(split, config.data_root, config.category, 'complete', 'partial', 'negative', config.n_pts)
+        dataset = PCNCon(split, config.data_root, config.category, 'complete', 'partial', 'negative', config.n_pts,
+                         config.partial_pts)
     elif config.module == "contrast_all_ae" or config.module == "contrast_all_vae" or config.module == "contrast_all_vqvae":
-        dataset = PCNConAll(split, config.data_root, config.category, 'complete', 'partial', 'negative', config.n_pts)
+        dataset = PCNConAll(split, config.data_root, config.category, 'complete', 'partial', 'negative', config.n_pts,
+                            config.partial_pts)
     else:
         raise ValueError
     dataloader = DataLoader(dataset, batch_size=config.batch_size, shuffle=is_shuffle, num_workers=config.num_workers,
@@ -132,7 +135,7 @@ class PCNAE(Dataset):
 
 
 class PCNGen(Dataset):
-    def __init__(self, split, data_root, category, gt_path, partial_path, n_pts):
+    def __init__(self, split, data_root, category, gt_path, partial_path, n_pts, partial_pts):
         super(PCNGen, self).__init__()
         self.split = split
         # self.shuffle = (split == "train")
@@ -142,7 +145,10 @@ class PCNGen(Dataset):
         self.partial_path = os.path.join(data_root, split, partial_path)
         self.data_names, self.gt_paths, self.partial_paths = self._load_data(category)
         self.n_pts = n_pts
-        self.partial_pts = n_pts // 2
+        if partial_pts is not None:
+            self.partial_pts = partial_pts
+        else:
+            self.partial_pts = n_pts // 2
 
     def __getitem__(self, index):
         # read partial cloud
@@ -194,7 +200,7 @@ class PCNGen(Dataset):
 
 
 class PCNCon(Dataset):
-    def __init__(self, split, data_root, category, gt_path, partial_path, negative_path, n_pts):
+    def __init__(self, split, data_root, category, gt_path, partial_path, negative_path, n_pts, partial_pts):
         super(PCNCon, self).__init__()
         self.split = split
         # self.shuffle = (split == "train")
@@ -205,7 +211,10 @@ class PCNCon(Dataset):
         self.negative_path = os.path.join(data_root, split, negative_path)
         self.data_names, self.gt_paths, self.negative_paths, self.partial_paths = self._load_data(category)
         self.n_pts = n_pts
-        self.partial_pts = n_pts // 2
+        if partial_pts is not None:
+            self.partial_pts = partial_pts
+        else:
+            self.partial_pts = n_pts // 2
 
     def __getitem__(self, index):
         # read partial cloud
@@ -269,7 +278,7 @@ class PCNCon(Dataset):
 
 
 class PCNConAll(Dataset):
-    def __init__(self, split, data_root, category, gt_path, partial_path, negative_path, n_pts):
+    def __init__(self, split, data_root, category, gt_path, partial_path, negative_path, n_pts, partial_pts):
         super(PCNConAll, self).__init__()
         self.split = split
         # self.shuffle = (split == "train")
@@ -279,7 +288,10 @@ class PCNConAll(Dataset):
         self.negative_path = os.path.join(data_root, split, negative_path)
         self.data_names, self.gt_paths, self.negative_paths, self.partial_paths = self._load_data(category)
         self.n_pts = n_pts
-        self.partial_pts = n_pts // 2
+        if partial_pts is not None:
+            self.partial_pts = partial_pts
+        else:
+            self.partial_pts = n_pts // 2
 
     def __getitem__(self, index):
         # read partial cloud

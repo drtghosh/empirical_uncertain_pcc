@@ -31,6 +31,8 @@ class GeneratorDrop(nn.Module):
 			if idx < len(config.n_features_gen):
 				activation_layer = nn.LeakyReLU(inplace=True)
 				model.append(activation_layer)
+				dropout_layer = nn.Dropout(0.5)
+				model.append(dropout_layer)
 
 			prev_nf = nf
 
