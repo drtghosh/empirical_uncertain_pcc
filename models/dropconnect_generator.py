@@ -1,4 +1,5 @@
 import torch.nn as nn
+from .model_utils import WeightDrop
 
 
 def weights_init(m):
@@ -11,9 +12,9 @@ def weights_init(m):
 		m.bias.data.fill_(0)
 
 
-class GeneratorDropout(nn.Module):
+class GeneratorDropConnect(nn.Module):
 	def __init__(self, config):
-		super(GeneratorDropout, self).__init__()
+		super(GeneratorDropConnect, self).__init__()
 		self.n_features = list(config.n_features_gen) + [config.latent_dim]
 		self.latent_dim = config.latent_dim
 		self.noise_dim = config.noise_dim
@@ -21,7 +22,10 @@ class GeneratorDropout(nn.Module):
 		model = []
 		prev_nf = config.latent_dim
 		for idx, nf in enumerate(self.n_features):
-			fc_layer = nn.Linear(prev_nf, nf)
+			if 0 < idx < len(config.n_features_gen):
+				fc_layer = WeightDrop(nn.Linear(prev_nf, nf), ['weight'], dropout=0.5)
+			else:
+				fc_layer = nn.Linear(prev_nf, nf)
 			model.append(fc_layer)
 
 			if config.gen_norm:
@@ -31,8 +35,6 @@ class GeneratorDropout(nn.Module):
 			if idx < len(config.n_features_gen):
 				activation_layer = nn.LeakyReLU(inplace=True)
 				model.append(activation_layer)
-				dropout_layer = nn.Dropout(0.5)
-				model.append(dropout_layer)
 
 			prev_nf = nf
 

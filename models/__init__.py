@@ -2,7 +2,8 @@ from models.autoencoder import PointAE
 from models.vae import VAE
 from models.vqvae import VQVAE
 from models.multimodal_imle import Generator
-from models.dropout_generator import GeneratorDrop
+from models.dropout_generator import GeneratorDropout
+from models.dropconnect_generator import GeneratorDropConnect
 from models.multimodal_ebm import EBMCompletion
 from models.generic_models import MLPBlock, MLPConv
 from models.model_utils import gen_nearest_latents
@@ -13,8 +14,10 @@ def get_model(config, name):
         return PointAE(config)
     elif name == "Gen":
         return Generator(config)
-    elif name == "genDrop":
-        return GeneratorDrop(config)
+    elif name == "genDropout":
+        return GeneratorDropout(config)
+    elif name == "genDropCon":
+        return GeneratorDropConnect(config)
     elif name == "EBMgen":
         return EBMCompletion(config)
     elif name == "blockMLP":
