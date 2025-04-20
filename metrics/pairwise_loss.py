@@ -1,8 +1,9 @@
 import torch
 from torch import nn
-from torch.nn import _reduction as _Reduction
 from torch import Tensor
 from torch.overrides import handle_torch_function, has_torch_function_variadic
+
+from loss_class import _Loss
 
 
 def pairwise_margin_loss(
@@ -45,11 +46,10 @@ def pairwise_margin_loss(
 		)
 
 	# compute loss
-	dist_pos = torch.square(torch.cdist(positive, positive, p=p))
-	dist_neg = torch.square(torch.cdist(negative, negative, p=p))
+	dist_pos = 0.5 * torch.square(torch.cdist(positive, positive, p=p))
 	dist_cross = torch.square(torch.clamp_min(margin - torch.cdist(positive, negative, p=p), 0))
 
-	loss = 0.5 * (dist_pos + dist_neg + dist_cross)
+	loss = 0.5 * (dist_pos + dist_cross)
 
 	# Apply reduction
 	if reduction == "sum":
@@ -58,17 +58,6 @@ def pairwise_margin_loss(
 		return torch.mean(loss)
 	else:  # reduction == "none"
 		return loss
-
-
-class _Loss(nn.Module):
-	reduction: str
-
-	def __init__(self, size_average=None, reduce=None, reduction: str = "mean") -> None:
-		super().__init__()
-		if size_average is not None or reduce is not None:
-			self.reduction: str = _Reduction.legacy_get_string(size_average, reduce)
-		else:
-			self.reduction = reduction
 
 
 class PairwiseMarginLoss(_Loss):
