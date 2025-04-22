@@ -1,0 +1,12 @@
+python train.py -l proj_log_mcdropcon \
+                -x pcn_table_mcdropcon \
+                -m drop_con_gen \
+                -n pcn \
+                -r data/PCN \
+                -c table \
+                -b 10 \
+                -a proj_log_ae/pcn_table_ae/ae/model/ckpt_epoch200.pth \
+                --lr 5e-4 \
+                --save_frequency 10 \
+                -e 100 \
+		            --vis
