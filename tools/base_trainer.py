@@ -482,16 +482,17 @@ class TrainerCommonEnsemble(object):
 		"""
 			load checkpoint from saved checkpoint
 		"""
-		name = name if name == 'latest' else "ckpt_epoch{}".format(epoch)
-		load_path = os.path.join(self.model_dir, "{}.pth".format(name))
-		if not os.path.exists(load_path):
-			raise ValueError("Checkpoint {} not exists.".format(load_path))
+		for i in range(self.n_models):
+			name = f'model{i}_' + name if name == 'latest' else "model{}_ckpt_epoch{}".format(i, epoch)
+			load_path = os.path.join(self.model_dir, "{}.pth".format(name))
+			if not os.path.exists(load_path):
+				raise ValueError("Checkpoint {} not exists.".format(load_path))
 
-		checkpoint = torch.load(load_path)
-		print("Loading checkpoint from {} ...".format(load_path))
-		self.model.load_state_dict(checkpoint['generator_state_dict'])
-		self.optimizer_gen.load_state_dict(checkpoint['optimizer_gen_state_dict'])
-		self.watcher.restore_checkpoint(checkpoint['watcher'])
+			checkpoint = torch.load(load_path)
+			print("Loading checkpoint from {} ...".format(load_path))
+			self.models[i].load_state_dict(checkpoint['generator_state_dict'])
+			self.optimizers_gen[i].load_state_dict(checkpoint['optimizer_gen_state_dict'])
+			self.watcher.restore_checkpoint(checkpoint['watcher'])
 
 	@abstractmethod
 	def forward(self, data):
@@ -512,7 +513,7 @@ class TrainerCommonEnsemble(object):
 		"""
 		for i in range(self.n_models):
 			self.train_tbw.add_scalar(f'learning_rate_{i}', self.optimizers_gen[i].param_groups[-1]['lr'],
-									  self.watcher.epoch)
+									self.watcher.epoch)
 
 	def record_losses(self, loss_dict, mode='train'):
 		"""
@@ -625,7 +626,7 @@ class TrainerCommonEBM(object):
 		"""
 		self.base_lr = config.lr
 		self.optimizer_ed = optim.Adam(list(self.model.encoder.parameters()) + list(self.model.decoder.parameters()),
-									   config.lr, betas=(config.beta1_ed, 0.999))
+									config.lr, betas=(config.beta1_ed, 0.999))
 		self.optimizer_ebm = optim.Adam(self.model.ebm.parameters(), config.lr, betas=(config.beta1_ebm, 0.999))
 
 	def set_scheduler(self, config):
