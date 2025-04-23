@@ -104,8 +104,8 @@ class Config(object):
                            help="Path to directory where experiment logs/models will be saved")
         group.add_argument('-d', '--device', type=str, default='cuda:0', help='Device for training/ inference')
         group.add_argument('-m', '--module', type=str,
-                           choices=['ae', 'vae', 'vqvae', 'c_gan', 'imle_gen', 'dropout_gen', 'drop_con_gen', 'ebm_gen',
-                                    'contrast_ae', 'contrast_vqvae', 'contrast_all_ae'],
+                           choices=['ae', 'vae', 'vqvae', 'c_gan', 'imle_gen', 'dropout_gen', 'drop_con_gen',
+                                    'ensemble_gen', 'ebm_gen', 'contrast_ae', 'contrast_vqvae', 'contrast_all_ae'],
                            required=True, help="Choice of the model to be used")
 
     @staticmethod
@@ -154,6 +154,12 @@ class Config(object):
         group.add_argument('--latent_gen_weight', type=float, default=5.0)
         group.add_argument('--recon_weight', type=float, default=6.0)
         group.add_argument('--gen_samples_train', type=int, default=20)
+        
+        # generator with dropout / dropconnect
+        group.add_argument('--dropout_prob', type=float, default=0.1)
+
+        # ensemble of generators
+        group.add_argument('--n_models', type=int, default=10)
 
         # energy based model
         group.add_argument('--step_size', type=float, default=0.05)

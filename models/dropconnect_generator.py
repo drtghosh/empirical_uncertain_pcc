@@ -18,12 +18,13 @@ class GeneratorDropConnect(nn.Module):
 		self.n_features = list(config.n_features_gen) + [config.latent_dim]
 		self.latent_dim = config.latent_dim
 		self.noise_dim = config.noise_dim
+		self.dropout_prob = config.dropout_prob
 
 		model = []
 		prev_nf = config.latent_dim
 		for idx, nf in enumerate(self.n_features):
 			if 0 < idx < len(config.n_features_gen):
-				fc_layer = WeightDrop(nn.Linear(prev_nf, nf), ['weight'], dropout=0.5)
+				fc_layer = WeightDrop(nn.Linear(prev_nf, nf), ['weight'], dropout=self.dropout_prob)
 			else:
 				fc_layer = nn.Linear(prev_nf, nf)
 			model.append(fc_layer)

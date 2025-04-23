@@ -17,6 +17,7 @@ class GeneratorDropout(nn.Module):
 		self.n_features = list(config.n_features_gen) + [config.latent_dim]
 		self.latent_dim = config.latent_dim
 		self.noise_dim = config.noise_dim
+		self.dropout_prob = config.dropout_prob
 
 		model = []
 		prev_nf = config.latent_dim
@@ -31,7 +32,7 @@ class GeneratorDropout(nn.Module):
 			if idx < len(config.n_features_gen):
 				activation_layer = nn.LeakyReLU(inplace=True)
 				model.append(activation_layer)
-				dropout_layer = nn.Dropout(0.5)
+				dropout_layer = nn.Dropout(self.dropout_prob)
 				model.append(dropout_layer)
 
 			prev_nf = nf
