@@ -13,7 +13,7 @@ from .data_utils import read_point_cloud_ply
 def get_dataloader_pcn(split, config):
     is_shuffle = (split == 'train')
 
-    if config.module == "c_gan" or config.module == 'imle_gen' or config.module == 'ebm_gen':
+    if config.module == "c_gan" or config.module == 'imle_gen' or config.module == 'ebm_gen' or config.module == 'dropout_gen' or config.module == 'drop_con_gen' or config.module == 'ensemble_gen':
         dataset = PCNGen(split, config.data_root, config.category, 'complete', 'partial', config.n_pts,
                          config.partial_pts)
     elif config.module == "ae" or config.module == "vae" or config.module == "vqvae":
