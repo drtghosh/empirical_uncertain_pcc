@@ -38,7 +38,7 @@ def _weight_drop(module, weights, device, dropout):
 
     def forward(*args, **kwargs):
         for name_w in weights:
-            raw_w = getattr(module, name_w + '_raw')
+            raw_w = getattr(module, name_w + '_raw').to(device)
             w = torch.nn.functional.dropout(raw_w, p=dropout, training=module.training).to(device)
             setattr(module, name_w, w)
 

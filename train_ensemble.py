@@ -1,3 +1,5 @@
+import numpy as np
+
 from configs import get_config
 from tools import get_trainer
 from datasets import get_dataloader
@@ -39,7 +41,7 @@ def train_ensemble():
 
     for e in range(watcher.epoch, config.num_epochs):
         # begin iteration
-        total_loss = 0.0
+        total_losses = np.zeros(trainer.n_models)
         pbar = tqdm(train_loader)
         for b, data in enumerate(pbar):
             # train step
@@ -53,7 +55,8 @@ def train_ensemble():
             losses = trainer.collect_loss()
             pbar.set_postfix(OrderedDict({k: v.item() for k, v in losses.items()}))
             for _, v in losses.items():
-                total_loss += v.item()
+                for i in range(trainer.n_models):
+                    total_losses[i] += v[i].item()
 
             # validation step
             if watcher.step % config.val_frequency == 0:
@@ -67,8 +70,11 @@ def train_ensemble():
 
         trainer.update_learning_rate()
         watcher.new_epoch()
-        total_loss /= len(pbar)
-        wandb.log({'epoch': e, 'total_loss': total_loss})
+        total_losses /= len(pbar)
+        loss_log_dict = dict({'epoch': e})
+        for i in range(trainer.n_models):
+            loss_log_dict[f'model_{i}_loss'] = total_losses[i]
+        wandb.log(loss_log_dict)
 
         if watcher.epoch % config.save_frequency == 0:
             trainer.save_ckpt()
