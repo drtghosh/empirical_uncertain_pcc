@@ -519,7 +519,7 @@ class TrainerCommonEnsemble(object):
 		"""
 			record loss to tensorboard
 		"""
-		losses_values = {k: v.item() for k, v in loss_dict.items()}
+		losses_values = {k: [model_loss.item() for model_loss in v] for k, v in loss_dict.items()}
 
 		tbw = self.train_tbw if mode == 'train' else self.val_tbw
 		for k, v in losses_values.items():
