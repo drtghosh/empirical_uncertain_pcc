@@ -551,6 +551,12 @@ class TrainerCommonEnsemble(object):
 		losses = self.collect_losses()
 		self.record_losses(losses, 'validation')
 
+	def visualize_batch(self, data, tbw, num, **kwargs):
+		"""
+			write visualization results to tensorboard writer
+		"""
+		raise NotImplementedError
+
 
 class TrainerCommonEBM(object):
 	"""

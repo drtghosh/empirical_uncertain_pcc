@@ -95,3 +95,16 @@ class TrainerDeepEnsemble(TrainerCommonEnsemble):
             self.optimizers_gen[i].zero_grad()
             self.losses[i].backward()
             self.optimizers_gen[i].step()
+
+    def visualize_batch(self, data, mode, num=2, **kwargs):
+        tbw = self.train_tbw if mode == 'train' else self.val_tbw
+
+        target_pts = data['gt_points'][:num].transpose(1, 2).detach().cpu().numpy()
+        partial_pts = data['partial_points'][:num].transpose(1, 2).detach().cpu().numpy()
+        generated_pts = self.gen_pc[:num].transpose(1, 2).detach().cpu().numpy()
+
+        # generated_pts = np.clip(generated_pts, -0.999, 0.999)
+
+        tbw.add_mesh("gt", vertices=target_pts, global_step=self.watcher.step)
+        tbw.add_mesh("partial", vertices=partial_pts, global_step=self.watcher.step)
+        tbw.add_mesh("generated", vertices=generated_pts, global_step=self.watcher.step)
