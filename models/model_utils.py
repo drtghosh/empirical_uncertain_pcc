@@ -24,7 +24,7 @@ def gen_nearest_latents(dci_db, gen_data, complete_data):
     return gen_data
 
 
-def _weight_drop(module, weights, dropout, device):
+def _weight_drop(module, weights, device, dropout):
     """
     Helper for `WeightDrop`.
     """
@@ -71,7 +71,7 @@ class WeightDrop(torch.nn.Module):
         >>>
         >>> gru = torch.nn.GRUCell(2, 2)
         >>> weights = ['weight_hh']
-        >>> weight_drop_gru = WeightDrop(gru, weights, dropout=0.9)
+        >>> weight_drop_gru = WeightDrop(gru, weights, device='cpu', dropout=0.9)
         >>>
         >>> input_ = torch.randn(3, 2)
         >>> hidden_state = torch.randn(3, 2)
@@ -81,5 +81,5 @@ class WeightDrop(torch.nn.Module):
 
     def __init__(self, module, weights, device, dropout=0.0):
         super(WeightDrop, self).__init__()
-        _weight_drop(module, weights, dropout, device)
+        _weight_drop(module, weights, device, dropout)
         self.forward = module.forward

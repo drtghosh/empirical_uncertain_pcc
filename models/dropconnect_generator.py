@@ -25,7 +25,7 @@ class GeneratorDropConnect(nn.Module):
 		prev_nf = config.latent_dim
 		for idx, nf in enumerate(self.n_features):
 			if 0 < idx < len(config.n_features_gen):
-				fc_layer = WeightDrop(nn.Linear(prev_nf, nf), ['weight'], self.dropout_prob, self.device)
+				fc_layer = WeightDrop(nn.Linear(prev_nf, nf), ['weight'], self.device, self.dropout_prob)
 			else:
 				fc_layer = nn.Linear(prev_nf, nf)
 			model.append(fc_layer)
