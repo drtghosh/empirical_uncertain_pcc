@@ -44,6 +44,7 @@ class TrainerDeepEnsemble(TrainerCommonEnsemble):
         for model in self.models:
             optimizer_gen = optim.Adam(model.parameters(), config.lr, betas=(config.beta1_gen, 0.999))
             optimizers.append(optimizer_gen)
+        return optimizers
 
     def set_loss_function(self):
         self.criterionLatent = self.criterionMSE
