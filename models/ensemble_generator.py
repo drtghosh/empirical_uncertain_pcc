@@ -11,12 +11,11 @@ def weights_init(m):
 		m.bias.data.fill_(0)
 
 
-class GeneratorDropout(nn.Module):
+class GeneratorEnsemble(nn.Module):
 	def __init__(self, config):
-		super(GeneratorDropout, self).__init__()
+		super(GeneratorEnsemble, self).__init__()
 		self.n_features = list(config.n_features_gen) + [config.latent_dim]
 		self.latent_dim = config.latent_dim
-		self.dropout_prob = config.dropout_prob
 
 		model = []
 		prev_nf = config.latent_dim
@@ -31,8 +30,6 @@ class GeneratorDropout(nn.Module):
 			if idx < len(config.n_features_gen):
 				activation_layer = nn.LeakyReLU(inplace=True)
 				model.append(activation_layer)
-				dropout_layer = nn.Dropout(self.dropout_prob)
-				model.append(dropout_layer)
 
 			prev_nf = nf
 

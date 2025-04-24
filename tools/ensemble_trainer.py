@@ -34,7 +34,7 @@ class TrainerDeepEnsemble(TrainerCommonEnsemble):
         # customize the build_model function to build multiple generators for bagging
         models = []
         for i in range(self.n_models):
-            model = get_model(config, "Gen").to(self.device)
+            model = get_model(config, "genEns").to(self.device)
             models.append(model)
         return models
 

@@ -4,6 +4,7 @@ from models.vqvae import VQVAE
 from models.multimodal_imle import Generator
 from models.dropout_generator import GeneratorDropout
 from models.dropconnect_generator import GeneratorDropConnect
+from models.ensemble_generator import GeneratorEnsemble
 from models.multimodal_ebm import EBMCompletion
 from models.generic_models import MLPBlock, MLPConv
 from models.model_utils import gen_nearest_latents
@@ -18,6 +19,8 @@ def get_model(config, name):
         return GeneratorDropout(config)
     elif name == "genDropCon":
         return GeneratorDropConnect(config)
+    elif name == "genEns":
+        return GeneratorEnsemble(config)
     elif name == "EBMgen":
         return EBMCompletion(config)
     elif name == "blockMLP":
