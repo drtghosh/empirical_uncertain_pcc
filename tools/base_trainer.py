@@ -523,7 +523,8 @@ class TrainerCommonEnsemble(object):
 
 		tbw = self.train_tbw if mode == 'train' else self.val_tbw
 		for k, v in losses_values.items():
-			tbw.add_scalar(k, v, self.watcher.step)
+			for i in range(len(v)):
+				tbw.add_scalar(k, v[i], self.watcher.step)
 
 	def train_func(self, data):
 		"""
