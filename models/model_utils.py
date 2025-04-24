@@ -24,7 +24,7 @@ def gen_nearest_latents(dci_db, gen_data, complete_data):
     return gen_data
 
 
-def _weight_drop(module, weights, dropout):
+def _weight_drop(module, weights, dropout, device):
     """
     Helper for `WeightDrop`.
     """
@@ -39,7 +39,7 @@ def _weight_drop(module, weights, dropout):
     def forward(*args, **kwargs):
         for name_w in weights:
             raw_w = getattr(module, name_w + '_raw')
-            w = torch.nn.functional.dropout(raw_w, p=dropout, training=module.training)
+            w = torch.nn.functional.dropout(raw_w, p=dropout, training=module.training).to(device)
             setattr(module, name_w, w)
 
         return original_module_forward(*args, **kwargs)
@@ -79,7 +79,7 @@ class WeightDrop(torch.nn.Module):
         tensor(... grad_fn=<AddBackward0>)
     """
 
-    def __init__(self, module, weights, dropout=0.0):
+    def __init__(self, module, weights, device, dropout=0.0):
         super(WeightDrop, self).__init__()
-        _weight_drop(module, weights, dropout)
+        _weight_drop(module, weights, dropout, device)
         self.forward = module.forward
