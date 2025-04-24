@@ -28,7 +28,7 @@ class GeneratorDropConnect(nn.Module):
 				fc_layer = WeightDrop(nn.Linear(prev_nf, nf), ['weight'], self.device, self.dropout_prob)
 				print(fc_layer.device)
 			else:
-				fc_layer = nn.Linear(prev_nf, nf)
+				fc_layer = nn.Linear(prev_nf, nf).to(self.device)
 				print(fc_layer.device)
 			model.append(fc_layer)
 
