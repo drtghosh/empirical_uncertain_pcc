@@ -34,7 +34,7 @@ def _weight_drop(module, weights, device, dropout):
         del module._parameters[name_w]
         module.register_parameter(name_w + '_raw', Parameter(w))
 
-    original_module_forward = module.forward
+    original_module_forward = module.forward.to(device)
 
     def forward(*args, **kwargs):
         for name_w in weights:

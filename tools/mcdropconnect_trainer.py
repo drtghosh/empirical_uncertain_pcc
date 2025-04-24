@@ -50,8 +50,6 @@ class TrainerMCDropConnect(TrainerCommonMulti):
             complete_latent = self.pointAE.encode(complete_enc)
 
         if train:
-            print(partial_latent.device)
-            print(self.model.device)
             latent_gen = self.model(partial_latent)
             self.gen_pc = self.pointAE.decode(latent_gen)
 

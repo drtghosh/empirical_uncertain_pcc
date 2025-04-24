@@ -9,7 +9,7 @@ from collections import OrderedDict
 import wandb
 
 
-def train_model():
+def train_ensemble():
     # create experiment config containing all hyperparameters
     config = get_config('train')
 
@@ -34,7 +34,8 @@ def train_model():
     watcher = trainer.watcher
 
     # weights and biases watch
-    wandb.watch(trainer.model)
+    for model in trainer.models:
+        wandb.watch(model)
 
     for e in range(watcher.epoch, config.num_epochs):
         # begin iteration
@@ -75,4 +76,4 @@ def train_model():
 
 
 if __name__ == '__main__':
-    train_model()
+    train_ensemble()
