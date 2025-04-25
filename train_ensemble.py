@@ -53,7 +53,7 @@ def train_ensemble():
 
             pbar.set_description("EPOCH[{}][{}]".format(e, b))
             losses = trainer.collect_losses()
-            pbar.set_postfix(OrderedDict({k: v.item() for k, v in losses.items()}))
+            pbar.set_postfix(OrderedDict({k: [model_loss.item() for model_loss in v] for k, v in losses.items()}))
             for _, v in losses.items():
                 for i in range(trainer.n_models):
                     total_losses[i] += v[i].item()
