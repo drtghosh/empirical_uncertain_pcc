@@ -68,7 +68,7 @@ def train_ensemble():
 
             watcher.within_epoch()
 
-        trainer.update_learning_rate()
+        trainer.update_learning_rates()
         watcher.new_epoch()
         total_losses /= len(pbar)
         loss_log_dict = dict({'epoch': e})
