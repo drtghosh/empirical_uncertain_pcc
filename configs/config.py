@@ -105,7 +105,8 @@ class Config(object):
         group.add_argument('-d', '--device', type=str, default='cuda:0', help='Device for training/ inference')
         group.add_argument('-m', '--module', type=str,
                            choices=['ae', 'vae', 'vqvae', 'c_gan', 'imle_gen', 'dropout_gen', 'drop_con_gen',
-                                    'ensemble_gen', 'ebm_gen', 'contrast_ae', 'contrast_vqvae', 'contrast_all_ae'],
+                                    'ensemble_gen', 'ebm_gen', 'contrast_ae', 'contrast_vqvae', 'contrast_all_ae',
+                                    'contrast_grid_ae'],
                            required=True, help="Choice of the model to be used")
 
     @staticmethod

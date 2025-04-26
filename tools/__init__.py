@@ -26,7 +26,7 @@ def get_trainer(config):
         return TrainerDeepEnsemble(config)
     elif config.module == 'ebm_gen':
         return TrainerEBM(config)
-    elif config.module == 'contrast_ae' or config.module == 'contrast_all_ae':
+    elif config.module == 'contrast_ae' or config.module == 'contrast_all_ae' or config.module == 'contrast_grid_ae':
         return TrainerAEContrast(config)
     elif config.module == 'contrast_vqvae':
         return TrainerVQVAEContrast(config)

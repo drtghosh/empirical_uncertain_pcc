@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from scipy import spatial
 from chainer.backends import cuda
 import torch
 import h5py
@@ -222,7 +223,35 @@ def create_negative_with_normal(path):
     return negative_data
 
 
-def save_negative_complete_pcn(data_root, split, category, cat2id, use_normal=False):
+def create_negative_on_grid(path, grid_size=128, eps=0.1, support=0.02):
+    point_cloud = o3d.io.read_point_cloud(path)
+    points = np.array(point_cloud.points)
+    # create array of grid sizes
+    space_dim = points.shape[-1]
+    grid_sizes = np.ones(space_dim, dtype=np.int32) * grid_size
+    # find the bounding box for all dataset
+    box_min = np.amin(points, 0) - eps
+    box_max = np.amax(points, 0) + eps
+
+    # Build a grid (dimension-agnostic)
+    grid_vertices = np.meshgrid(
+        *[np.linspace(box_min[d], box_max[d], grid_sizes[d]) for d in range(space_dim)])
+    grid_vertices = np.stack(grid_vertices, axis=-1).reshape(-1, space_dim)
+    # grid_vertices = torch.tensor(grid_vertices, dtype=torch.float32)
+    kdtree = spatial.KDTree(points)
+    indices_to_remove = []
+    for i, v in enumerate(grid_vertices):
+        distance, index = kdtree.query(v)
+        if distance < support:
+            indices_to_remove.append(i)
+    grid_vertices_new = np.delete(grid_vertices, indices_to_remove, 0)
+    grid_vertices_save = grid_vertices_new[np.random.permutation(len(grid_vertices_new))[:len(points)]]
+
+    return grid_vertices_save
+
+
+def save_negative_complete_pcn(data_root, split, category, cat2id, use_normal=False, on_grid=False):
+    negative_folder = 'negative'
     assert split in ['train', 'validation', 'test'], "split error value!"
     with open(os.path.join(data_root, split + '.list'), 'r') as f:
         lines = f.read().splitlines()
@@ -233,16 +262,20 @@ def save_negative_complete_pcn(data_root, split, category, cat2id, use_normal=Fa
     for line in lines:
         file_path = os.path.join(data_root, split, 'complete', line + '.ply')
         if use_normal:
+            negative_folder = 'negative_from_normal'
             new_points = create_negative_with_normal(file_path)
+        elif on_grid:
+            negative_folder = 'negative_grid'
+            new_points = create_negative_on_grid(file_path)
         else:
             new_points = create_negative_data(file_path)
         new_pc = o3d.geometry.PointCloud()
         new_pc.points = o3d.utility.Vector3dVector(new_points)
         # noinspection PyTypeChecker
-        negative_cat_path = os.path.join(data_root, split, 'negative', cat_id)
+        negative_cat_path = os.path.join(data_root, split, negative_folder, cat_id)
         if not os.path.exists(negative_cat_path):
             os.makedirs(negative_cat_path)
-        o3d.io.write_point_cloud(os.path.join(data_root, split, 'negative', line + '.ply'), new_pc)
+        o3d.io.write_point_cloud(os.path.join(data_root, split, negative_folder, line + '.ply'), new_pc)
 
 
 id_dict = {
@@ -256,8 +289,8 @@ id_dict = {
     "table": "04379243",
     "vessel": "04530566",  # boat
 }
-save_negative_complete_pcn('data/PCN', 'train', 'table', id_dict, True)
-save_negative_complete_pcn('data/PCN', 'validation', 'table', id_dict, True)
+# save_negative_complete_pcn('data/PCN', 'train', 'table', id_dict, True)
+# save_negative_complete_pcn('data/PCN', 'validation', 'table', id_dict, True)
 
 
 def create_grid(test_data, grid_size, space_dim=3, box_min=None, box_max=None, eps=0.2):
