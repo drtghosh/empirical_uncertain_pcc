@@ -2,6 +2,7 @@ import os
 import numpy as np
 from scipy import spatial
 from chainer.backends import cuda
+from joblib import Parallel, delayed
 import torch
 import h5py
 import laspy as lp
@@ -287,6 +288,49 @@ def save_negative_complete_pcn(data_root, split, category, cat2id, use_normal=Fa
             o3d.io.write_point_cloud(new_path, new_pc)
 
 
+def save_negative_complete_pcn_parallel(data_root, split, category, cat2id, use_normal=False, on_grid=False):
+    negative_folder = 'negative'
+    assert split in ['train', 'validation', 'test'], "split error value!"
+    with open(os.path.join(data_root, split + '.list'), 'r') as f:
+        lines = f.read().splitlines()
+
+    cat_id = cat2id[category]
+    lines = list(filter(lambda x: x.startswith(cat_id), lines))
+
+    if use_normal:
+        negative_folder = 'negative_from_normal'
+
+    if on_grid:
+        negative_folder = 'negative_grid'
+
+    # noinspection PyTypeChecker
+    negative_cat_path = os.path.join(data_root, split, negative_folder, cat_id)
+    if not os.path.exists(negative_cat_path):
+        os.makedirs(negative_cat_path)
+
+    # parallelization
+    Parallel(n_jobs=6)(
+        delayed(save_negative_complete_pcn_file)(data_root, split, negative_folder, line, use_normal, on_grid) for line
+        in lines)
+
+
+def save_negative_complete_pcn_file(data_root, split, negative_folder, line, use_normal=False, on_grid=False):
+    new_path = os.path.join(data_root, split, negative_folder, line + '.ply')
+    if os.path.exists(new_path):
+        pass
+    else:
+        file_path = os.path.join(data_root, split, 'complete', line + '.ply')
+        if use_normal:
+            new_points = create_negative_with_normal(file_path)
+        elif on_grid:
+            new_points = create_negative_on_grid(file_path)
+        else:
+            new_points = create_negative_data(file_path)
+        new_pc = o3d.geometry.PointCloud()
+        new_pc.points = o3d.utility.Vector3dVector(new_points)
+        o3d.io.write_point_cloud(new_path, new_pc)
+
+
 id_dict = {
     # seen categories
     "airplane": "02691156",  # plane
@@ -298,8 +342,8 @@ id_dict = {
     "table": "04379243",
     "vessel": "04530566",  # boat
 }
-save_negative_complete_pcn('data/PCN', 'train', 'table', id_dict, False, True)
-save_negative_complete_pcn('data/PCN', 'validation', 'table', id_dict, False, True)
+# save_negative_complete_pcn_parallel('data/PCN', 'train', 'table', id_dict, False, True)
+save_negative_complete_pcn_parallel('data/PCN', 'validation', 'table', id_dict, False, True)
 
 
 def create_grid(test_data, grid_size, space_dim=3, box_min=None, box_max=None, eps=0.2):

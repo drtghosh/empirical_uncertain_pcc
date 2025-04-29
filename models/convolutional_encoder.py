@@ -5,6 +5,8 @@ from typing import Callable, Dict, List, Tuple, Union
 import torch
 from torch import nn
 from torch_scatter import scatter_mean, scatter_max
+from .model_utils import coordinate2index, normalize_coordinate, normalize_3d_coordinate, depth_to_volume
+from .model_utils import grid_sample_2d, grid_sample_3d
 from .generic_models import ResnetBlockFC
 from .unet import UNet
 from .unet3d import UNet3D
@@ -183,3 +185,249 @@ class ConvolutionalFeature(nn.Module):
             raise ValueError('incorrect scatter type')
 
         self.last_epoch = -1
+
+    def generate_plane_features(self, p, c, plane='xz'):
+        # acquire indices of features in plane
+        # normalize to the range of (0, 1)
+        xy = normalize_coordinate(
+            p.clone(), plane=plane, bbox_size=self.bbox_size)
+        index = coordinate2index(xy, self.reso_plane)
+
+        # scatter plane features from points
+        feat_plane = c.new_zeros(p.size(0), self.c_dim, self.reso_plane ** 2)
+        c = c.permute(0, 2, 1)  # B x 512 x torch.Tensor
+        fea_plane = scatter_mean(c, index, out=feat_plane)  # B x 512 x reso^2
+        # sparce matrix (B x 512 x reso x reso)
+        fea_plane = fea_plane.reshape(
+            p.size(0), self.c_dim, self.reso_plane, self.reso_plane)
+
+        # process the plane features with UNet
+        if self.unet is not None:
+            fea_plane = self.unet(fea_plane)
+
+        if self.subpixel_upsampling > 1:
+            # pixel-shuffle upsampling
+            fea_plane = self.ps(fea_plane)
+
+        return fea_plane
+
+    def generate_grid_features(self, p, c):
+        p_nor = normalize_3d_coordinate(
+            p.clone(), bbox_size=self.bbox_size)
+        index = coordinate2index(p_nor, self.reso_grid, coord_type='3d')
+        # scatter grid features from points
+        feat_grid = c.new_zeros(p.size(0), self.c_dim, self.reso_grid ** 3)
+        c = c.permute(0, 2, 1)
+        feat_grid = scatter_mean(c, index, out=feat_grid)  # B x C x reso^3
+        # sparce matrix (B x 512 x reso x reso)
+        feat_grid = feat_grid.reshape(
+            p.size(0), self.c_dim, self.reso_grid, self.reso_grid, self.reso_grid)
+
+        if self.unet3d is not None:
+            feat_grid = self.unet3d(feat_grid)
+
+        if self.subpixel_upsampling > 1:
+            feat_grid = depth_to_volume(feat_grid, self.subpixel_upsampling)
+
+        return feat_grid
+
+    def pool_local(self, xy, index, c):
+        bs, feat_dim = c.size(0), c.size(2)
+        keys = xy.keys()
+
+        c_out = 0
+        for key in keys:
+            # scatter plane features from points
+            if key == 'grid':
+                fea = self.scatter(c.permute(0, 2, 1),
+                                   index[key], dim_size=self.reso_grid ** 3)
+            else:
+                fea = self.scatter(c.permute(0, 2, 1),
+                                   index[key], dim_size=self.reso_plane ** 2)
+            if self.scatter == scatter_max:
+                fea = fea[0]
+            # gather feature back to points
+            fea = fea.gather(dim=2, index=index[key].expand(-1, feat_dim, -1))
+            c_out += fea
+        return c_out.permute(0, 2, 1)
+
+    def query_feature(self, fea: Dict[str, torch.Tensor], query_coords: torch.Tensor) -> torch.Tensor:
+        # self.bbox_size = getattr(self.runner.data, 'bbox_size', self.bbox_size)
+
+        # originally inside the decoder
+        if self.c_dim != 0:
+            plane_type = list(fea.keys())
+            # merge different planes with sum
+            c = 0
+            if 'grid' in plane_type:
+                c += self.sample_grid_feature(query_coords, fea['grid'])
+            if 'xz' in plane_type:
+                c += self.sample_plane_feature(query_coords,
+                                               fea['xz'], plane='xz')
+            if 'xy' in plane_type:
+                c += self.sample_plane_feature(query_coords,
+                                               fea['xy'], plane='xy')
+            if 'yz' in plane_type:
+                c += self.sample_plane_feature(query_coords,
+                                               fea['yz'], plane='yz')
+            c = c.transpose(1, 2)
+
+        return c
+
+    def query_global_feature(self, fea: Dict[str, torch.Tensor]) -> torch.Tensor:
+        """
+        Global max pooling
+        Returns:
+            (B, P, self.c_dim)
+        """
+        if self.c_dim != 0:
+            plane_type = list(fea.keys())
+            # merge different planes with sum
+            c_max = None
+            c_avg = None
+            if 'grid' in plane_type:
+                batch_size = fea['grid'].shape[0]
+                c_max = fea['grid'].view(
+                    batch_size, self.c_dim, -1).max(dim=-1)[0]
+                c_avg = fea['grid'].view(
+                    batch_size, self.c_dim, -1).mean(dim=-1)
+                c = c_max
+                # c += torch.cat([c_max, c_avg], dim=-1)
+            if 'xz' in plane_type:
+                batch_size = fea['xz'].shape[0]
+                c_max = fea['xz'].view(
+                    batch_size, self.c_dim, -1).max(dim=-1)[0]
+                c_avg = fea['xz'].view(batch_size, self.c_dim, -1).mean(dim=-1)
+                # c += torch.cat([c_max, c_avg], dim=-1)
+            if 'xy' in plane_type:
+                batch_size = fea['xy'].shape[0]
+                c_max = fea['xy'].view(
+                    batch_size, self.c_dim, -1).max(dim=-1)[0]
+                c_avg = fea['xy'].view(batch_size, self.c_dim, -1).mean(dim=-1)
+                # c += torch.cat([c_max, c_avg], dim=-1)
+            if 'yz' in plane_type:
+                batch_size = fea['yz'].shape[0]
+                c_max = fea['yz'].view(
+                    batch_size, self.c_dim, -1).max(dim=-1)[0]
+                c_avg = fea['yz'].view(batch_size, self.c_dim, -1).mean(dim=-1)
+                # c += torch.cat([c_max, c_avg], dim=-1)
+        c = c_max
+        return c
+
+    def sample_plane_feature(self, p, c, plane='xz'):
+        # normalize to the range of (0, 1)
+        xy = normalize_coordinate(
+            p.clone(), plane=plane, bbox_size=self.bbox_size)
+        xy = xy[:, :, None].float()
+        vgrid = 2.0 * xy - 1.0  # normalize to (-1, 1)
+        if c.shape[0] == 1 and vgrid.shape[0] > 0:
+            c = c.expand(vgrid.shape[0], -1, -1, -1)
+        c = grid_sample_2d(c, vgrid).squeeze(-1)
+        return c
+
+    def sample_grid_feature(self, p, c):
+        # normalize to the range of (0, 1)
+        p_nor = normalize_3d_coordinate(
+            p.clone(), bbox_size=self.bbox_size)
+        p_nor = p_nor[:, :, None, None].float()
+        vgrid = 2.0 * p_nor - 1.0  # normalize to (-1, 1)
+        # actually trilinear interpolation if mode = 'bilinear'
+        if c.shape[0] == 1 and vgrid.shape[0] > 0:
+            c = c.expand(vgrid.shape[0], -1, -1, -1, -1)
+        c = grid_sample_3d(c, vgrid).squeeze(-1).squeeze(-1)
+        return c
+
+    def encode(self, input_tensor: torch.Tensor) -> Dict[str, torch.Tensor]:
+        input_coords = input_tensor[..., :3]
+        if self.input_normals:
+            input_feats = input_tensor[..., 3:(3 + self.dim)]
+        elif self.clusternet_feature:
+            input_feats = self.extractor(input_coords)
+        else:
+            input_feats = input_coords.clone()
+
+        # acquire the index for each point
+        coord = {}
+        index = {}
+        if 'xz' in self.plane_type:
+            coord['xz'] = normalize_coordinate(input_coords.clone(
+            ), plane='xz', bbox_size=self.bbox_size)
+            index['xz'] = coordinate2index(coord['xz'], self.reso_plane)
+        if 'xy' in self.plane_type:
+            coord['xy'] = normalize_coordinate(input_coords.clone(
+            ), plane='xy', bbox_size=self.bbox_size)
+            index['xy'] = coordinate2index(coord['xy'], self.reso_plane)
+        if 'yz' in self.plane_type:
+            coord['yz'] = normalize_coordinate(input_coords.clone(
+            ), plane='yz', bbox_size=self.bbox_size)
+            index['yz'] = coordinate2index(coord['yz'], self.reso_plane)
+        if 'grid' in self.plane_type:
+            coord['grid'] = normalize_3d_coordinate(
+                input_coords.clone(), bbox_size=self.bbox_size)
+            index['grid'] = coordinate2index(
+                coord['grid'], self.reso_grid, coord_type='3d')
+
+        net = self.fc_pos(input_feats)
+
+        net = self.blocks[0](net)
+        for block in self.blocks[1:]:
+            pooled = self.pool_local(coord, index, net)
+            net = torch.cat([net, pooled], dim=2)
+            net = block(net)
+
+        c = self.fc_c(net)
+
+        fea = {}
+        if 'grid' in self.plane_type:
+            fea['grid'] = self.generate_grid_features(input_coords, c)
+        if 'xz' in self.plane_type:
+            fea['xz'] = self.generate_plane_features(
+                input_coords, c, plane='xz')
+        if 'xy' in self.plane_type:
+            fea['xy'] = self.generate_plane_features(
+                input_coords, c, plane='xy')
+        if 'yz' in self.plane_type:
+            fea['yz'] = self.generate_plane_features(
+                input_coords, c, plane='yz')
+
+        return fea
+
+    def query_local_coordinates(self, input_coords):
+        if "grid " in self.plane_type and len(self.plane_type) > 1:
+            # make sure plane resolution is the same as grid resolution
+            assert (self.reso_grid ==
+                    self.reso_plane), "Local coordinates mapping only supports equal grid_reso and plane_reso"
+
+        # assuming input in between -0.5 to 0.5
+        p_nor = normalize_3d_coordinate(
+            input_coords.clone(), bbox_size=self.bbox_size)
+        vgrid = 2.0 * p_nor - 1.0  # normalize to (-1, 1)
+
+        if 'grid' in self.plane_type:
+            cell_size = 2.0 / self.reso_plane
+        else:
+            cell_size = 2.0 / self.reso_grid
+
+        return torch.remainder(vgrid, cell_size) / cell_size
+
+    def forward(self, args) -> torch.Tensor:
+        """
+        Args:
+            args: contains- input_coords: (N, P, 3) input point positions (can use relative ones as well),
+                query_coords (N, Q, 3) query point position
+        Returns:
+            query_fea: (N, P, c_dim)
+        """
+        input_coords = args['pointclouds']
+        query_coords = args['coords']
+
+        assert (query_coords.size(-1) == 3)
+
+        fea = self.encode(input_coords)
+        query_feat = self.query_feature(fea, query_coords)
+
+        return query_feat
+
+    def save(self, path):
+        torch.save(self, path)
+
