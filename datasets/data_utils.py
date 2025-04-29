@@ -288,7 +288,7 @@ def save_negative_complete_pcn(data_root, split, category, cat2id, use_normal=Fa
             o3d.io.write_point_cloud(new_path, new_pc)
 
 
-def save_negative_complete_pcn_parallel(data_root, split, category, cat2id, use_normal=False, on_grid=False):
+def save_negative_complete_pcn_parallel(data_root, split, category, cat2id, use_normal=False, on_grid=False, jobs=6):
     negative_folder = 'negative'
     assert split in ['train', 'validation', 'test'], "split error value!"
     with open(os.path.join(data_root, split + '.list'), 'r') as f:
@@ -309,7 +309,7 @@ def save_negative_complete_pcn_parallel(data_root, split, category, cat2id, use_
         os.makedirs(negative_cat_path)
 
     # parallelization
-    Parallel(n_jobs=6)(
+    Parallel(n_jobs=jobs)(
         delayed(save_negative_complete_pcn_file)(data_root, split, negative_folder, line, use_normal, on_grid) for line
         in lines)
 
@@ -342,8 +342,8 @@ id_dict = {
     "table": "04379243",
     "vessel": "04530566",  # boat
 }
-# save_negative_complete_pcn_parallel('data/PCN', 'train', 'table', id_dict, False, True)
-save_negative_complete_pcn_parallel('data/PCN', 'validation', 'table', id_dict, False, True)
+save_negative_complete_pcn_parallel('data/PCN', 'train', 'table', id_dict, False, True, 12)
+# save_negative_complete_pcn_parallel('data/PCN', 'validation', 'table', id_dict, False, True)
 
 
 def create_grid(test_data, grid_size, space_dim=3, box_min=None, box_max=None, eps=0.2):
