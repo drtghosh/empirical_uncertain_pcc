@@ -141,7 +141,7 @@ class UNet(nn.Module):
 
     def __init__(self, num_classes, in_channels=3, depth=5,
                  start_filters=64, up_mode='transpose',
-                 merge_mode='concat'):
+                 merge_mode='concat', **kwargs):
         """
         Arguments:
             in_channels: int, number of channels in the input tensor.

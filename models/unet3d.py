@@ -129,7 +129,7 @@ class ExtResNetBlock(nn.Module):
         Notice we use ELU instead of ReLU (order='cge') and put non-linearity after the groupnorm.
     """
 
-    def __init__(self, in_channels, out_channels, kernel_size=3, order='cge', num_groups=8):
+    def __init__(self, in_channels, out_channels, kernel_size=3, order='cge', num_groups=8, **kwargs):
         super(ExtResNetBlock, self).__init__()
 
         # first convolution

@@ -22,7 +22,7 @@ def get_knn(vs: torch.Tensor, k: int, batch_idx: torch.Tensor) -> torch.Tensor:
 
 
 def extract_angles(vs: torch.Tensor, distance_k: torch.Tensor, vs_k: torch.Tensor) -> Union[
-    Tuple[torch.Tensor, ...], List[torch.Tensor]]:
+                    Tuple[torch.Tensor, ...], List[torch.Tensor]]:
     proj = torch.einsum('nd,nkd->nk', vs, vs_k)
     cos_angles = torch.clamp(proj / distance_k, -1., 1.)
     proj = vs_k - vs[:, None, :] * proj[:, :, None]

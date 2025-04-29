@@ -259,23 +259,32 @@ def save_negative_complete_pcn(data_root, split, category, cat2id, use_normal=Fa
     cat_id = cat2id[category]
     lines = list(filter(lambda x: x.startswith(cat_id), lines))
 
+    if use_normal:
+        negative_folder = 'negative_from_normal'
+
+    if on_grid:
+        negative_folder = 'negative_grid'
+
+    # noinspection PyTypeChecker
+    negative_cat_path = os.path.join(data_root, split, negative_folder, cat_id)
+    if not os.path.exists(negative_cat_path):
+        os.makedirs(negative_cat_path)
+
     for line in lines:
-        file_path = os.path.join(data_root, split, 'complete', line + '.ply')
-        if use_normal:
-            negative_folder = 'negative_from_normal'
-            new_points = create_negative_with_normal(file_path)
-        elif on_grid:
-            negative_folder = 'negative_grid'
-            new_points = create_negative_on_grid(file_path)
+        new_path = os.path.join(data_root, split, negative_folder, line + '.ply')
+        if os.path.exists(new_path):
+            pass
         else:
-            new_points = create_negative_data(file_path)
-        new_pc = o3d.geometry.PointCloud()
-        new_pc.points = o3d.utility.Vector3dVector(new_points)
-        # noinspection PyTypeChecker
-        negative_cat_path = os.path.join(data_root, split, negative_folder, cat_id)
-        if not os.path.exists(negative_cat_path):
-            os.makedirs(negative_cat_path)
-        o3d.io.write_point_cloud(os.path.join(data_root, split, negative_folder, line + '.ply'), new_pc)
+            file_path = os.path.join(data_root, split, 'complete', line + '.ply')
+            if use_normal:
+                new_points = create_negative_with_normal(file_path)
+            elif on_grid:
+                new_points = create_negative_on_grid(file_path)
+            else:
+                new_points = create_negative_data(file_path)
+            new_pc = o3d.geometry.PointCloud()
+            new_pc.points = o3d.utility.Vector3dVector(new_points)
+            o3d.io.write_point_cloud(new_path, new_pc)
 
 
 id_dict = {
