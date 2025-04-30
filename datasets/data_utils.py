@@ -342,7 +342,7 @@ id_dict = {
     "table": "04379243",
     "vessel": "04530566",  # boat
 }
-save_negative_complete_pcn_parallel('data/PCN', 'train', 'table', id_dict, False, True, 12)
+# save_negative_complete_pcn_parallel('data/PCN', 'train', 'table', id_dict, False, True, 12)
 # save_negative_complete_pcn_parallel('data/PCN', 'validation', 'table', id_dict, False, True)
 
 
