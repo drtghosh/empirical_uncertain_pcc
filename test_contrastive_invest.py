@@ -142,6 +142,9 @@ def test_con():
             # gaussian process
             cov_fn = gpytorch.kernels.RBFKernel(ard_num_dims=test_embedding.size(-1)).to(trainer.device)
             cov_pp = cov_fn(test_embedding).evaluate_kernel().to_dense()
+            heatmap_pp = sns.heatmap(cov_pp.cpu().numpy())
+            heatmap7 = heatmap_pp.get_figure()
+            heatmap7.savefig(os.path.join(pc_dir, 'heatmap_pp.jpg'))
             additional_noise = config.noise_variance * torch.eye(test_embedding.size(0)).to(trainer.device)
             cov_with_noise = (cov_pp + additional_noise)
             cov_inv = torch.linalg.inv(cov_with_noise)
