@@ -142,7 +142,7 @@ def test_con():
             # gaussian process
             cov_fn = gpytorch.kernels.RBFKernel(ard_num_dims=test_embedding.size(-1)).to(trainer.device)
             cov_pp = cov_fn(test_embedding).evaluate_kernel().to_dense()
-            heatmap_pp = sns.heatmap(cov_pp.cpu().numpy())
+            heatmap_pp = sns.heatmap(cov_pp.cpu().numpy(), cbar=False)
             heatmap7 = heatmap_pp.get_figure()
             heatmap7.savefig(os.path.join(pc_dir, 'heatmap_pp.jpg'))
             additional_noise = config.noise_variance * torch.eye(test_embedding.size(0)).to(trainer.device)
@@ -156,6 +156,9 @@ def test_con():
             for i in range(num_batches):
                 b = grid_embedding[i * config.gp_batch: (i + 1) * config.gp_batch]
                 cov_pb = cov_fn(test_embedding, b).evaluate_kernel().to_dense()
+                heatmap_pb = sns.heatmap(cov_pb.cpu().numpy(), cbar=False)
+                heatmap8 = heatmap_pb.get_figure()
+                heatmap8.savefig(os.path.join(pc_dir, f'heatmap_pb{i}.jpg'))
                 cov_bb = cov_fn(b, b).evaluate_kernel().to_dense()
                 posterior_mean = cov_pb.T @ cov_inv @ test_label
                 posterior_var = cov_bb - cov_pb.T @ cov_inv @ cov_pb
