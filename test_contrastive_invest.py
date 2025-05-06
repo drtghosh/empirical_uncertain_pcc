@@ -156,7 +156,8 @@ def test_con():
             for i in range(num_batches):
                 b = grid_embedding[i * config.gp_batch: (i + 1) * config.gp_batch]
                 cov_pb = cov_fn(test_embedding, b).evaluate_kernel().to_dense()
-                if (i+1) % 32 == 0:
+                # if (i+1) % 32 == 0:
+                if 1199 <= i <= 1263:
                     heatmap_pb = sns.heatmap(cov_pb.cpu().numpy(), cbar=False)
                     heatmap8 = heatmap_pb.get_figure()
                     heatmap8.savefig(os.path.join(pc_dir, f'heatmap_pb{i}.jpg'))
