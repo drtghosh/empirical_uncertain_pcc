@@ -7,7 +7,8 @@ from models.dropconnect_generator import GeneratorDropConnect
 from models.ensemble_generator import GeneratorEnsemble
 from models.multimodal_ebm import EBMCompletion
 from models.generic_models import MLPBlock, MLPConv
-from models.model_utils import gen_nearest_latents
+from models.hessian_shape_network import ShapeNetwork
+from models.model_utils import gen_nearest_latents, gen_nearest_latents_with_indices
 
 
 def get_model(config, name):
@@ -29,6 +30,8 @@ def get_model(config, name):
         return VAE(config)
     elif name == "VQVAE":
         return VQVAE(config)
+    elif name == "HessComplex":
+        return ShapeNetwork(config)
     else:
         raise NotImplementedError("Got name '{}'".format(name))
 

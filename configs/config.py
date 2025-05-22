@@ -106,7 +106,7 @@ class Config(object):
         group.add_argument('-m', '--module', type=str,
                            choices=['ae', 'vae', 'vqvae', 'c_gan', 'imle_gen', 'dropout_gen', 'drop_con_gen',
                                     'ensemble_gen', 'ebm_gen', 'contrast_ae', 'contrast_vqvae', 'contrast_all_ae',
-                                    'contrast_grid_ae'],
+                                    'contrast_grid_ae', 'hessian'],
                            required=True, help="Choice of the model to be used")
 
     @staticmethod
