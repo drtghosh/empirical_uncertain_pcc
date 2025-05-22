@@ -291,7 +291,7 @@ class HessianSimpleLoss(nn.Module):
 		self.bidirectional_morse = bidirectional_morse
 		self.decay_params_list = None
 
-	def forward(self, output_pred, manifold_points, non_manifold_points, near_points=None):
+	def forward(self, output_pred, manifold_points, non_manifold_points, near_points):
 		dims = manifold_points.shape[-1]
 		device = manifold_points.device
 

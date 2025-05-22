@@ -7,6 +7,7 @@ from tools.mcdropconnect_trainer import TrainerMCDropConnect
 from tools.ensemble_trainer import TrainerDeepEnsemble
 from tools.ebm_trainer import TrainerEBM
 from tools.contrastive_trainer import TrainerAEContrast, TrainerVQVAEContrast
+from tools.hessian_trainer import TrainerHessian
 
 
 def get_trainer(config):
@@ -30,5 +31,7 @@ def get_trainer(config):
         return TrainerAEContrast(config)
     elif config.module == 'contrast_vqvae':
         return TrainerVQVAEContrast(config)
+    elif config.module == 'hessian':
+        return TrainerHessian(config)
     else:
         raise ValueError

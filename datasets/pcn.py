@@ -494,12 +494,12 @@ class PCNHess(Dataset):
         sigmas = torch.topk(dist, k=51, dim=1, largest=False)[0][:, -1:]  # (n_points, 1)
         near_pts = (pc + sigmas * torch.randn(pc.shape[0], pc.shape[1]))
 
-        pc_enc = positional_encoding(pc)  # .transpose(1, 0)
+        # pc_enc = positional_encoding(pc)  # .transpose(1, 0)
         # pc = pc.transpose(1, 0)
 
-        return {"id": "/".join(self.data_names[index]), "gt_points": pc, "gt_encoded": pc_enc,
-                "partial_id": render_choice, "partial_points": partial_pc, "partial_encoded": partial_enc,
-                "non_manifold_points": non_manifold_pts, "near_points": near_pts}
+        return {"id": "/".join(self.data_names[index]), "gt_points": pc, "partial_id": render_choice,
+                "partial_points": partial_pc, "partial_encoded": partial_enc, "non_manifold_points": non_manifold_pts,
+                "near_points": near_pts} # "gt_encoded": pc_enc,
 
     def _load_data(self, category):
         split_dict = split_data_by_cat(self.data_root, category)

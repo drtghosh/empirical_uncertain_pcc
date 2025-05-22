@@ -179,6 +179,14 @@ class Config(object):
         group.add_argument('--triplet_margin', type=float, default=0.1)
         group.add_argument('--loss_batch', type=int, default=512)
 
+        # hessian inr
+        self.loss_weights = [7e3, 6e2, 5e1, 3, 1]
+        parser.add_argument('--simple_hessian', type=bool, default=True, help='whether to use simple network')
+        parser.add_argument('--morse_type', type=str, default='l1', help='divergence term norm l1 | l2')
+        parser.add_argument('--morse_decay', type=str, default='linear',
+                            help='divergence term importance decay none | step | linear')
+        parser.add_argument('--bidirectional_morse', action='store_true', default=True)
+
     @staticmethod
     def _add_training_config_(parser):
         """

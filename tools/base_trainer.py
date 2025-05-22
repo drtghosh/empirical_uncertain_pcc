@@ -950,11 +950,8 @@ class TrainerCommonINR(object):
 		self.scheduler = None
 		self.set_scheduler(config)
 
-		# store predicted points
-		self.predicted_pts = None
-
 		# store loss values
-		self.loss = None
+		self.loss_dict = {}
 
 		# set tensorboard writer
 		self.train_tbw = SummaryWriter(os.path.join(self.log_dir, 'train.events'))
@@ -982,14 +979,14 @@ class TrainerCommonINR(object):
 			set optimizer used in training
 		"""
 		self.base_lr = config.lr
-		self.optimizer = optim.Adam(self.model.parameters(), config.lr)
+		self.optimizer = optim.Adam(self.model.parameters(), config.lr, amsgrad=True)
 
 	def set_scheduler(self, config):
 		"""
 			set lr scheduler used in training
 		"""
-		# self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, config.lr_step_size)
-		self.scheduler = optim.lr_scheduler.ExponentialLR(self.optimizer, config.lr_decay)
+		self.scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(self.optimizer, T_0=150 * 10, T_mult=2,
+																		eta_min=1e-6)
 
 	def save_ckpt(self, name=None):
 		"""
@@ -1045,8 +1042,8 @@ class TrainerCommonINR(object):
 		"""
 			update network by back propagation
 		"""
-		loss = sum(loss_dict.values())
-		self.optimizer.zero_grad()
+		loss = loss_dict['loss']
+		self.model.zero_grad()
 		loss.backward()
 		self.optimizer.step()
 
