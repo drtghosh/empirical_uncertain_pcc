@@ -4,7 +4,8 @@ from .hausdorff import directed_hausdorff as df
 from .hausdorff import local_directed_hausdorff as ldf
 from .triplet_loss import Triplet
 from .loss_utils import loss_accumulation as lacc
+from .morse import HessianSimpleLoss as hessMorse
 
 __all__ = [
-    'emd', 'df', 'ldf', 'Triplet', 'lacc'
+    'emd', 'df', 'ldf', 'Triplet', 'lacc', 'hessMorse'
 ]  # 'cd', 'fscore',

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from dciknn_cuda import DCI
-from models import gen_nearest_latents_with_indices
+from models import get_nearest_mapping
 
 
 class EncoderPC(nn.Module):
@@ -59,7 +59,7 @@ class EncoderPC(nn.Module):
 		return mean, log_var
 
 
-class DecoderFC(nn.Module):
+class ImplicitDecoder(nn.Module):
 	"""
 		Decoder class for reconstructing a 2/3D point cloud from the encoding.
 		Args-
@@ -69,15 +69,14 @@ class DecoderFC(nn.Module):
 			normalize: boolean indicating batch normalization is used
 			space_dim: dimension of the data space
 	"""
-	def __init__(self, n_features=(256, 256), latent_dim=256, noise_dim=32, normalize=False, space_dim=3):
-		super(DecoderFC, self).__init__()
+	def __init__(self, n_features=(256, 256), latent_dim=256, normalize=False, space_dim=3):
+		super(ImplicitDecoder, self).__init__()
 		self.n_features = list(n_features) + [1]
 		self.latent_dim = latent_dim
-		self.noise_dim = noise_dim
 		self.space_dim = space_dim
 
 		model = []
-		prev_nf = latent_dim + noise_dim + space_dim
+		prev_nf = space_dim + latent_dim
 		for idx, nf in enumerate(self.n_features):
 			fc_layer = nn.Linear(prev_nf, nf)
 			model.append(fc_layer)
@@ -104,10 +103,11 @@ class ImplicitVAE(nn.Module):
 		super(ImplicitVAE, self).__init__()
 		self.encoder = EncoderPC(config.enc_features_inr, config.latent_dim, config.res_layers, config.enc_norm,
 								config.space_dim)
-		self.decoder = DecoderFC(config.dec_features_inr, config.latent_dim, config.noise_dim_inr, config.dec_norm,
-								config.space_dim)
-		self.dci_db = DCI(config.latent_dim, 2, 10, 100, 10)
-		self.zeros = torch.zeros((config.batch_size, config.n_pts))
+		self.decoder = ImplicitDecoder(config.dec_features_inr, config.latent_dim, config.dec_norm, config.space_dim)
+		self.dci_db = DCI(config.n_pts, 2, 10, 100, 10)
+		self.n_pts = config.n_pts
+		self.zeros = torch.zeros((1, config.n_pts)).to(config.device)
+		self.no_samples = config.gen_samples_train
 
 	def encode(self, x):
 		return self.encoder(x)
@@ -121,20 +121,27 @@ class ImplicitVAE(nn.Module):
 	def decode(self, x):
 		return self.decoder(x)
 
-	def forward(self, partial_pts, manifold_pts, non_manifold_pts, near_pts, noises):
+	def forward(self, partial_pts, manifold_pts, non_manifold_pts, near_pts):
 		mean, log_var = self.encoder(partial_pts)
-		z = self.reparameterization(mean, torch.exp(0.5 * log_var))
-		multi_z = z.unsqueeze(1).repeat(1, manifold_pts.size(-1), 1)
+		var = torch.exp(0.5 * log_var)
+		z_list = []
 		manifold_pred_list = []
-		for noise in noises:
-			multi_noise = noise.unsqueeze(1).repeat(1, manifold_pts.size(-1), 1)
-			manifold_pts_pred = self.decoder(torch.cat([multi_z, multi_noise, manifold_pts], dim=-1))
-			manifold_pred_list.append(manifold_pts_pred)
+		for i in range(self.no_samples):
+			z = self.reparameterization(mean, var)
+			z_list.append(z)
+			multi_z = z.unsqueeze(1).repeat(1, self.n_pts, 1)
+			manifold_pred = self.decoder(torch.cat([manifold_pts, multi_z], dim=-1)).squeeze()
+			manifold_pred_list.append(manifold_pred)
+		z_list = torch.stack(z_list, 1)
+		manifold_pred_list = torch.stack(manifold_pred_list, 1)
 
-		non_manifold_pts_pred = self.decoder(torch.cat([multi_z, multi_noise, non_manifold_pts], dim=-1))
-		near_pts_pred = self.decoder(torch.cat([multi_z, multi_noise, near_pts], dim=-1))
+		manifold_nearest, z_used = get_nearest_mapping(self.dci_db, manifold_pred_list, self.zeros, z_list)
 
-		return {"manifold_pts_pred": manifold_pts_pred,
+		multi_z_used = z_used.unsqueeze(1).repeat(1, self.n_pts, 1).cpu()
+		non_manifold_pts_pred = self.decoder(torch.cat([non_manifold_pts, multi_z_used], dim=-1)).squeeze()
+		near_pts_pred = self.decoder(torch.cat([near_pts, multi_z_used], dim=-1)).squeeze()
+
+		return {"manifold_pts_pred": manifold_nearest,
 				"non_manifold_pts_pred": non_manifold_pts_pred,
 				'near_pts_pred': near_pts_pred,
 				"latent_mean": mean,

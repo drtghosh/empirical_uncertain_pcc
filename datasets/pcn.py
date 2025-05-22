@@ -491,7 +491,7 @@ class PCNHess(Dataset):
 
         # points close to surface
         dist = torch.cdist(pc, pc)
-        sigmas = torch.topk(dist, k=21, dim=1, largest=False)[0][:, -1:]  # (n_points, 1)
+        sigmas = torch.topk(dist, k=51, dim=1, largest=False)[0][:, -1:]  # (n_points, 1)
         near_pts = (pc + sigmas * torch.randn(pc.shape[0], pc.shape[1]))
 
         pc_enc = positional_encoding(pc)  # .transpose(1, 0)

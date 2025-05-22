@@ -49,6 +49,31 @@ def gen_nearest_latents_with_indices(dci_db, gen_data, complete_data):
     return gen_data, stacked_indices
 
 
+def get_nearest_mapping(dci_db, manifold_predictions, zeros, z_data):
+    indices = []
+    manifold_pred_selected = []
+    z_data_used = []
+
+    for s in range(manifold_predictions.shape[0]):
+        manifold_pred = manifold_predictions[s]
+        z_sample = z_data[s]
+        # try: (adding data)
+        dci_db.add(manifold_pred)
+        # indices, dists = dci_db.query(query, num_neighbours, num_outer_iterations)
+        index, _ = dci_db.query(zeros, 1, 5000)
+        indices.append(index[0][0].long())
+        dci_db.clear()
+        manifold_pred_selected.append(manifold_pred[index[0][0].long()])
+        z_data_used.append(z_sample[index[0][0].long()])
+
+    # dci_db.free()
+    manifold_pred_data = torch.stack(manifold_pred_selected)
+    z_data = torch.stack(z_data_used)
+    torch.cuda.empty_cache()
+
+    return manifold_pred_data, z_data
+
+
 def _weight_drop(module, weights, device, dropout):
     """
     Helper for `WeightDrop`.

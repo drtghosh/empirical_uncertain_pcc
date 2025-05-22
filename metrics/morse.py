@@ -53,6 +53,14 @@ def latent_rg_loss(latent_reg, device):
 
 	return reg_loss
 
+def latent_rg_loss_var(latent_mean, latent_log_var, device):
+	if latent_mean is not None:
+		reg_loss = 0.5*(torch.abs(latent_mean).mean() + latent_log_var.mean())
+	else:
+		reg_loss = torch.tensor([0.0], device=device)
+
+	return reg_loss
+
 
 def gradient(inputs, outputs, create_graph=True, retain_graph=True):
 	d_points = torch.ones_like(outputs, requires_grad=False, device=outputs.device)
@@ -294,7 +302,8 @@ class HessianSimpleLoss(nn.Module):
 		manifold_pred = output_pred["manifold_pts_pred"]
 		non_manifold_pred = output_pred["non_manifold_pts_pred"]
 		near_pred = output_pred["near_pts_pred"]
-		latent_reg = output_pred["latent_reg"]
+		latent_mean = output_pred["latent_mean"]
+		latent_log_var = output_pred["latent_log_var"]
 
 		# signed distance function term for points on surface
 		sdf_term_manifold = torch.abs(manifold_pred).mean()
@@ -344,7 +353,7 @@ class HessianSimpleLoss(nn.Module):
 
 		# If multiple surface reconstruction, then latent and latent_reg are defined so reg_term need to be used
 		# latent regularization for multiple shape learning
-		latent_reg_term = latent_rg_loss(latent_reg, device)
+		latent_reg_term = latent_rg_loss_var(latent_mean, latent_log_var, device)
 
 		#########################################
 		# combined losses
