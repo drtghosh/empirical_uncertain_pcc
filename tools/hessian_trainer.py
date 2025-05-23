@@ -27,13 +27,13 @@ class TrainerHessian(TrainerCommonINR):
         if train:
             manifold_pts = complete_pc
 
-            manifold_pts.requires_grad()
-            non_manifold_pts.requires_grad()
-            near_pts.requires_grad()
+            manifold_pts.requires_grad_()
+            non_manifold_pts.requires_grad_()
+            near_pts.requires_grad_()
 
             output_pred = self.model(partial_enc, manifold_pts, non_manifold_pts, near_pts)
 
-            loss_dict, _ = self.criterion(output_pred, manifold_pts, non_manifold_pts, near_pts)
+            self.loss, self.loss_dict, _ = self.criterion(output_pred, manifold_pts, non_manifold_pts, near_pts)
         else:
             manifold_pts = partial_pc
 

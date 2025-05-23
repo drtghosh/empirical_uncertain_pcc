@@ -302,6 +302,8 @@ class HessianSimpleLoss(nn.Module):
 		manifold_pred = output_pred["manifold_pts_pred"]
 		non_manifold_pred = output_pred["non_manifold_pts_pred"]
 		near_pred = output_pred["near_pts_pred"]
+		# latent_mean = None
+		# latent_log_var = None
 		latent_mean = output_pred["latent_mean"]
 		latent_log_var = output_pred["latent_log_var"]
 
@@ -338,8 +340,8 @@ class HessianSimpleLoss(nn.Module):
 		near_det = torch.det(near_hessian)
 		manifold_det = torch.det(manifold_hessian)
 
-		manifold_hessian_term = torch.tensor([0.0], device=device)
-		near_hessian_term = torch.tensor([0.0], device=device)
+		manifold_hessian_term = None
+		near_hessian_term = None
 		if self.div_type == 'l2':
 			near_hessian_term = near_det.square().mean()
 			if self.bidirectional_morse:
@@ -349,7 +351,7 @@ class HessianSimpleLoss(nn.Module):
 			if self.bidirectional_morse:
 				manifold_hessian_term = manifold_det.abs().mean()
 
-		hessian_term = 0.5 * (manifold_hessian_term + near_hessian_term)
+		hessian_term = (0.5 * (manifold_hessian_term + near_hessian_term)).to(device)
 
 		# If multiple surface reconstruction, then latent and latent_reg are defined so reg_term need to be used
 		# latent regularization for multiple shape learning
@@ -362,7 +364,7 @@ class HessianSimpleLoss(nn.Module):
 		loss = self.weights[0] * sdf_term_manifold + self.weights[1] * sdf_term_non_manifold + self.weights[
 			2] * eikonal_term + self.weights[3] * hessian_term + self.weights[4] * latent_reg_term
 
-		return ({"loss": loss, 'sdf_term_manifold': sdf_term_manifold, 'sdf_term_non_manifold': sdf_term_non_manifold,
+		return (loss, {"loss": loss, 'sdf_term_manifold': sdf_term_manifold, 'sdf_term_non_manifold': sdf_term_non_manifold,
 				'eikonal_term': eikonal_term, 'hessian_term': hessian_term, 'latent_reg_term': latent_reg_term},
 				manifold_grad)
 

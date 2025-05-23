@@ -1,0 +1,11 @@
+python train_hessian.py -l proj_log_inr \
+                        -x pcn_cabinet_inr \
+                        -m hessian \
+                        -n pcn \
+                        -r data/PCN \
+                        -c cabinet \
+                        -b 1 \
+                        --latent_dim 256\
+                        --lr 1e-4 \
+                        --save_frequency 10 \
+                        -e 200

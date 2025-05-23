@@ -180,12 +180,19 @@ class Config(object):
         group.add_argument('--loss_batch', type=int, default=512)
 
         # hessian inr
+        parser.add_argument('--seed', type=int, default=3627473, help='random seed')
+        parser.add_argument('--grad_clip_norm', type=float, default=10.0, help='Value to clip gradients to')
+        self.enc_features_inr = (64, 128, 128, 256)
+        self.res_layers_inr = (2,)
+        self.dec_features_inr = (512, 512, 512)
         self.loss_weights = [7e3, 6e2, 5e1, 3, 1]
         parser.add_argument('--simple_hessian', type=bool, default=True, help='whether to use simple network')
         parser.add_argument('--morse_type', type=str, default='l1', help='divergence term norm l1 | l2')
         parser.add_argument('--morse_decay', type=str, default='linear',
                             help='divergence term importance decay none | step | linear')
         parser.add_argument('--bidirectional_morse', action='store_true', default=True)
+        parser.add_argument('--decay_params', nargs='+', type=float, default=[3, 0.1, 3, 0.2, 0.001, 0],
+                            help='epoch number to evaluate')
 
     @staticmethod
     def _add_training_config_(parser):

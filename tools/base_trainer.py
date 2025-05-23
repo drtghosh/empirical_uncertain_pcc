@@ -948,9 +948,10 @@ class TrainerCommonINR(object):
 
 		# set lr scheduler
 		self.scheduler = None
-		self.set_scheduler(config)
+		self.set_scheduler()
 
 		# store loss values
+		self.loss = None
 		self.loss_dict = {}
 
 		# set tensorboard writer
@@ -981,7 +982,7 @@ class TrainerCommonINR(object):
 		self.base_lr = config.lr
 		self.optimizer = optim.Adam(self.model.parameters(), config.lr, amsgrad=True)
 
-	def set_scheduler(self, config):
+	def set_scheduler(self):
 		"""
 			set lr scheduler used in training
 		"""
@@ -1038,13 +1039,11 @@ class TrainerCommonINR(object):
 		"""
 		raise NotImplementedError
 
-	def update_network(self, loss_dict):
+	def update_network(self):
 		"""
 			update network by back propagation
 		"""
-		loss = loss_dict['loss']
-		self.model.zero_grad()
-		loss.backward()
+		self.loss.backward(retain_graph=True)
 		self.optimizer.step()
 
 	def update_learning_rate(self):
@@ -1070,11 +1069,13 @@ class TrainerCommonINR(object):
 			one step of training
 		"""
 		self.model.train()
+		self.model.zero_grad(set_to_none=True)
 		self.forward(data)
 
 		losses = self.collect_loss()
-		self.update_network(losses)
+		self.update_network()
 		self.record_losses(losses, 'train')
+		self.optimizer.zero_grad()
 
 	def val_func(self, data):
 		"""

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from dciknn_cuda import DCI
-from models import get_nearest_mapping
+from .model_utils import get_nearest_mapping
 
 
 class EncoderPC(nn.Module):
@@ -101,7 +101,7 @@ class ImplicitDecoder(nn.Module):
 class ImplicitVAE(nn.Module):
 	def __init__(self, config):
 		super(ImplicitVAE, self).__init__()
-		self.encoder = EncoderPC(config.enc_features_inr, config.latent_dim, config.res_layers, config.enc_norm,
+		self.encoder = EncoderPC(config.enc_features_inr, config.latent_dim, config.res_layers_inr, config.enc_norm,
 								config.space_dim)
 		self.decoder = ImplicitDecoder(config.dec_features_inr, config.latent_dim, config.dec_norm, config.space_dim)
 		self.dci_db = DCI(config.n_pts, 2, 10, 100, 10)
@@ -123,29 +123,42 @@ class ImplicitVAE(nn.Module):
 
 	def forward(self, partial_pts, manifold_pts, non_manifold_pts, near_pts):
 		mean, log_var = self.encoder(partial_pts)
-		var = torch.exp(0.5 * log_var)
 		z_list = []
 		manifold_pred_list = []
 		for i in range(self.no_samples):
-			z = self.reparameterization(mean, var)
+			z = self.reparameterization(mean, torch.exp(0.5 * log_var))
 			z_list.append(z)
 			multi_z = z.unsqueeze(1).repeat(1, self.n_pts, 1)
-			manifold_pred = self.decoder(torch.cat([manifold_pts, multi_z], dim=-1)).squeeze()
+			manifold_pred = self.decoder(torch.cat([manifold_pts, multi_z], dim=-1)).squeeze(-1)
 			manifold_pred_list.append(manifold_pred)
 		z_list = torch.stack(z_list, 1)
 		manifold_pred_list = torch.stack(manifold_pred_list, 1)
 
 		manifold_nearest, z_used = get_nearest_mapping(self.dci_db, manifold_pred_list, self.zeros, z_list)
 
-		multi_z_used = z_used.unsqueeze(1).repeat(1, self.n_pts, 1).cpu()
-		non_manifold_pts_pred = self.decoder(torch.cat([non_manifold_pts, multi_z_used], dim=-1)).squeeze()
-		near_pts_pred = self.decoder(torch.cat([near_pts, multi_z_used], dim=-1)).squeeze()
+		multi_z_used = z_used.unsqueeze(1).repeat(1, self.n_pts, 1)
+		non_manifold_pts_pred = self.decoder(torch.cat([non_manifold_pts, multi_z_used], dim=-1)).squeeze(-1)
+		near_pts_pred = self.decoder(torch.cat([near_pts, multi_z_used], dim=-1)).squeeze(-1)
 
 		return {"manifold_pts_pred": manifold_nearest,
 				"non_manifold_pts_pred": non_manifold_pts_pred,
 				'near_pts_pred': near_pts_pred,
 				"latent_mean": mean,
 				"latent_log_var": log_var}
+
+	"""def forward(self, partial_pts, manifold_pts, non_manifold_pts, near_pts):
+		mean, log_var = self.encoder(partial_pts)
+		z = self.reparameterization(mean, torch.exp(0.5 * log_var))
+		multi_z = z.unsqueeze(1).repeat(1, self.n_pts, 1)
+		manifold_pred = self.decoder(torch.cat([manifold_pts, multi_z], dim=-1)).squeeze(-1)
+		non_manifold_pts_pred = self.decoder(torch.cat([non_manifold_pts, multi_z], dim=-1)).squeeze(-1)
+		near_pts_pred = self.decoder(torch.cat([near_pts, multi_z], dim=-1)).squeeze(-1)
+
+		return {"manifold_pts_pred": manifold_pred,
+				"non_manifold_pts_pred": non_manifold_pts_pred,
+				'near_pts_pred': near_pts_pred,
+				"latent_mean": mean,
+				"latent_log_var": log_var}"""
 
 
 if __name__ == '__main__':
