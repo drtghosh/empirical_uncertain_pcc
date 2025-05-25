@@ -13,7 +13,7 @@ class EncoderPC(nn.Module):
 			residual_layers: tuple of layer indices where earlier global feature is concatenated to local features
 			normalize: boolean indicating batch normalization is used
 			space_dim: dimension of the data space
-	"""
+
 
 	def __init__(self, n_features=(64, 128, 256, 256), latent_dim=256, residual_layers=(2,), normalize=True, space_dim=3):
 		super(EncoderPC, self).__init__()
@@ -56,7 +56,48 @@ class EncoderPC(nn.Module):
 				x = self.model[2 * idx + 1](self.model[2 * idx](x))
 		x = torch.max(x, dim=2)[0]
 		mean, log_var = torch.split(x, self.latent_dim, -1)
-		return mean, log_var
+		return mean, log_var"""
+	def __init__(self, n_features=(64, 128, 256, 256), latent_dim=256, residual_layers=(2,), normalize=True, space_dim=3):
+		super(EncoderPC, self).__init__()
+		self.n_features = list(n_features) + [latent_dim]
+		self.latent_dim = latent_dim
+		self.residual_layers = list(residual_layers)
+		self.normalize = normalize
+		assert self.residual_layers[-1] < len(n_features), "global feature should not be concatenated in the final layer"
+
+		model = []
+		# fix positional encoding size here
+		pos_enc = 6
+		prev_nf = space_dim + (pos_enc * pos_enc)
+		for idx, nf in enumerate(self.n_features):
+			if idx in self.residual_layers:
+				prev_nf = 2 * prev_nf
+			conv_layer = nn.Conv1d(prev_nf, nf, 1)
+			model.append(conv_layer)
+
+			if normalize:
+				norm_layer = nn.BatchNorm1d(nf)
+				model.append(norm_layer)
+
+			activation_layer = nn.LeakyReLU(inplace=True)
+			model.append(activation_layer)
+			prev_nf = nf
+
+		self.model = nn.Sequential(*model)
+
+	def forward(self, pc):
+		batch_size, _, partial_num = pc.shape  # B, _, N = batch_size, _, partial_num
+		x = pc  # pc.transpose(2, 1)
+		for idx, nf in enumerate(self.n_features):
+			if idx in self.residual_layers:
+				global_feature = torch.max(x, dim=2, keepdim=True)[0]
+				x = torch.cat([global_feature.expand(-1, -1, partial_num), x], dim=1)
+			if self.normalize:
+				x = self.model[3*idx + 2](self.model[3*idx + 1](self.model[3*idx](x)))
+			else:
+				x = self.model[2 * idx + 1](self.model[2 * idx](x))
+		x = torch.max(x, dim=2)[0]
+		return x
 
 
 class ImplicitDecoder(nn.Module):
@@ -122,6 +163,18 @@ class ImplicitVAE(nn.Module):
 		return self.decoder(x)
 
 	def forward(self, partial_pts, manifold_pts, non_manifold_pts, near_pts):
+		z = self.encoder(partial_pts)
+		multi_z = z.unsqueeze(1).repeat(1, self.n_pts, 1)
+		manifold_pts_pred = self.decoder(torch.cat([manifold_pts, multi_z], dim=-1)).squeeze(-1)
+		non_manifold_pts_pred = self.decoder(torch.cat([non_manifold_pts, multi_z], dim=-1)).squeeze(-1)
+		near_pts_pred = self.decoder(torch.cat([near_pts, multi_z], dim=-1)).squeeze(-1)
+
+		return {"manifold_pts_pred": manifold_pts_pred,
+				"non_manifold_pts_pred": non_manifold_pts_pred,
+				'near_pts_pred': near_pts_pred,
+				"latent_z": z}
+
+	"""def forward(self, partial_pts, manifold_pts, non_manifold_pts, near_pts):
 		mean, log_var = self.encoder(partial_pts)
 		z_list = []
 		manifold_pred_list = []
@@ -146,7 +199,7 @@ class ImplicitVAE(nn.Module):
 				"latent_mean": mean,
 				"latent_log_var": log_var}
 
-	"""def forward(self, partial_pts, manifold_pts, non_manifold_pts, near_pts):
+	def forward(self, partial_pts, manifold_pts, non_manifold_pts, near_pts):
 		mean, log_var = self.encoder(partial_pts)
 		z = self.reparameterization(mean, torch.exp(0.5 * log_var))
 		multi_z = z.unsqueeze(1).repeat(1, self.n_pts, 1)

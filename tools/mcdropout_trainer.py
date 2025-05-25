@@ -61,7 +61,7 @@ class TrainerMCDropout(TrainerCommonMulti):
             self.latent_gen_list = []
             for idx in range(self.n_samples):
                 with torch.no_grad():
-                    latent_gen = self.model(partial_latent, train=True)
+                    latent_gen = self.model(partial_latent)
                 self.latent_gen_list.append(latent_gen)
 
     def collect_loss(self):
