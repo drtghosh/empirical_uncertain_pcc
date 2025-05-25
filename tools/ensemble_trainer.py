@@ -80,7 +80,7 @@ class TrainerDeepEnsemble(TrainerCommonEnsemble):
             for model in self.models:
                 model.eval()
                 with torch.no_grad():
-                    latent_gen = model(partial_latent, train=True)
+                    latent_gen = model(partial_latent)
                 self.latent_gen_list.append(latent_gen)
 
     def collect_losses(self):
