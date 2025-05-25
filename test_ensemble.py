@@ -20,7 +20,6 @@ def test_ensemble_gen():
 
     # load from checkpoint
     trainer.load_ckpt(config.ckpt)
-    trainer.model.eval()
 
     # create dataloader
     config.batch_size = 1
