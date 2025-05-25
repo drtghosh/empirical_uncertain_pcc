@@ -58,7 +58,8 @@ class Config(object):
 
         self.log_dir = os.path.join(self.exp_dir, 'log')
         self.model_dir = os.path.join(self.exp_dir, 'model')
-        make_dirs([self.log_dir, self.model_dir])
+        self.result_dir = os.path.join(self.exp_dir, 'results')
+        make_dirs([self.log_dir, self.model_dir, self.result_dir])
 
         # save this configuration
         if self.is_train:

@@ -11,7 +11,7 @@ from tqdm import tqdm
 from test_utils import naive_estimation, matching_estimation
 
 
-def test_imle_gen():
+def test_ensemble_gen():
     # create experiment config containing all hyperparameters
     config = get_config('test')
 
@@ -96,4 +96,4 @@ def test_imle_gen():
 
 
 if __name__ == '__main__':
-    test_imle_gen()
+    test_ensemble_gen()
