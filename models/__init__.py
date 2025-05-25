@@ -9,7 +9,7 @@ from models.multimodal_ebm import EBMCompletion
 from models.generic_models import MLPBlock, MLPConv
 from models.hessian_shape_network import ShapeNetwork
 from models.inr_vae import ImplicitVAE
-from models.model_utils import gen_nearest_latents, get_nearest_mapping
+from models.model_utils import gen_nearest_latents, get_nearest_mapping, enable_dropout
 
 
 def get_model(config, name):

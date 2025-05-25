@@ -135,6 +135,13 @@ class WeightDrop(torch.nn.Module):
         self.forward = module.forward
 
 
+def enable_dropout(model):
+    """ Function to enable the dropout layers during test-time """
+    for m in model.modules():
+        if m.__class__.__name__.startswith('Dropout'):
+            m.train()
+
+
 def coordinate2index(x, reso, coord_type='2d'):
     """
         Normalize coordinate to [0, 1] for unit cube experiments.

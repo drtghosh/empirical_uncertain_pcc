@@ -2,6 +2,7 @@ import torch
 from models import get_model, set_requires_grad
 from tools.base_trainer import TrainerCommonMulti
 from metrics import ldf
+from models import enable_dropout
 
 
 class TrainerMCDropout(TrainerCommonMulti):
@@ -60,6 +61,8 @@ class TrainerMCDropout(TrainerCommonMulti):
         else:
             self.latent_gen_list = []
             for idx in range(self.n_samples):
+                self.model.eval()
+                enable_dropout(self.model)
                 with torch.no_grad():
                     latent_gen = self.model(partial_latent)
                 self.latent_gen_list.append(latent_gen)
