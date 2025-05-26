@@ -52,9 +52,6 @@ class EncoderPC(nn.Module):
 			prev_nf = nf
 
 		self.model = nn.Sequential(*model)
-		# initialize the weights
-		for i in range(len(model)):
-			nn.init.xavier_uniform_(self.model[i].weight)
 
 	def forward(self, pc):
 		batch_size, _, partial_num = pc.shape  # B, _, N = batch_size, _, partial_num
