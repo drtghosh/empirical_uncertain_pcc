@@ -33,8 +33,10 @@ class DataModule(pl.LightningDataModule):
         super().__init__()
         self.args = config
 
+    @staticmethod
     def train_dataloader(self):
         return train_loader
+
 
 class BaseTrainer(pl.LightningModule):
     def __init__(self, config):
@@ -50,6 +52,7 @@ class BaseTrainer(pl.LightningModule):
                                    div_type=config.morse_type, bidirectional_morse=config.bidirectional_morse)
 
     def training_step(self, data):
+        wandb_logger.watch(self.net)
         self.net.train()
         self.net.zero_grad(set_to_none=True)
         partial_pc, partial_enc, manifold_pts, non_manifold_pts, near_pts = (
@@ -62,10 +65,12 @@ class BaseTrainer(pl.LightningModule):
         output_pred = self.net(partial_enc, manifold_pts, non_manifold_pts, near_pts)
 
         loss, loss_dict, _ = self.criterion(output_pred, manifold_pts, non_manifold_pts, near_pts)
-        wandb_logger.log_text(f'Epoch: {self.current_epoch}, Loss: {loss_dict["loss"]}, L_Manifold: {loss_dict["sdf_term_manifold"]},' +
+        """wandb_logger.log_text(f'Epoch: {self.current_epoch}, Loss: {loss_dict["loss"]}, L_Manifold: {loss_dict["sdf_term_manifold"]},' +
                              f'L_NonManifold: {loss_dict["sdf_term_non_manifold"]}, L_Eikonal: {loss_dict["eikonal_term"]},' +
-                             f', L_Morse: {loss_dict["hessian_term"]} + L_Latent: {loss_dict["latent_reg_term"]}')
-        wandb.log(loss_dict)
+                             f', L_Morse: {loss_dict["hessian_term"]} + L_Latent: {loss_dict["latent_reg_term"]}')"""
+        log_dict = loss_dict
+        log_dict['epoch'] = self.current_epoch
+        wandb.log(log_dict)
         return {'loss': loss, 'manifold': manifold_pts[:1]}
 
     def on_training_epoch_end(self):
