@@ -1,7 +1,18 @@
 import torch
 import torch.nn as nn
+import numpy as np
 from dciknn_cuda import DCI
 from .model_utils import get_nearest_mapping
+
+
+def weights_geometric_init(m):
+	class_name = m.__class__.__name__
+	if class_name.find('Linear') != -1:
+		m.weight.data.normal_(np.sqrt(np.pi) / np.sqrt(m.in_features), 0.0001)
+		m.bias.data.fill_(-1.0)
+	elif class_name.find('BatchNorm') != -1:
+		m.weight.data.normal_(1.0, 0.02)
+		m.bias.data.fill_(0)
 
 
 class EncoderPC(nn.Module):
@@ -79,7 +90,7 @@ class EncoderPC(nn.Module):
 				norm_layer = nn.BatchNorm1d(nf)
 				model.append(norm_layer)
 
-			activation_layer = nn.LeakyReLU(inplace=True)
+			activation_layer = nn.Softplus()
 			model.append(activation_layer)
 			prev_nf = nf
 
@@ -127,12 +138,14 @@ class ImplicitDecoder(nn.Module):
 				model.append(norm_layer)
 
 			if idx < len(n_features):
-				activation_layer = nn.LeakyReLU(inplace=True)
+				activation_layer = nn.Softplus()
 				model.append(activation_layer)
 
 			prev_nf = nf
 
 		self.model = nn.Sequential(*model)
+
+		self.apply(weights_geometric_init)
 
 	def forward(self, x):
 		x = self.model(x)
