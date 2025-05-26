@@ -34,7 +34,7 @@ class DataModule(pl.LightningDataModule):
         self.args = config
 
     @staticmethod
-    def train_dataloader(self):
+    def train_dataloader():
         return train_loader
 
 
