@@ -185,7 +185,8 @@ class Config(object):
         parser.add_argument('--grad_clip_norm', type=float, default=10.0, help='Value to clip gradients to')
         self.enc_features_inr = (64, 128, 128, 256)
         self.res_layers_inr = (2,)
-        self.dec_features_inr = (512, 512, 512)
+        self.dec_features_inr = (512, 512, 512, 512)
+        parser.add_argument('--noise_dim_inr', type=int, default=16)
         self.loss_weights = [7e3, 6e2, 5e1, 3, 1]
         parser.add_argument('--simple_hessian', type=bool, default=True, help='whether to use simple network')
         parser.add_argument('--morse_type', type=str, default='l1', help='divergence term norm l1 | l2')
