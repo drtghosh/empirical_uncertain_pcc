@@ -52,7 +52,6 @@ class BaseTrainer(pl.LightningModule):
                                    div_type=config.morse_type, bidirectional_morse=config.bidirectional_morse)
 
     def training_step(self, data):
-        wandb_logger.watch(self.net)
         self.net.train()
         self.net.zero_grad(set_to_none=True)
         partial_pc, partial_enc, manifold_pts, non_manifold_pts, near_pts = (
