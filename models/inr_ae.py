@@ -123,6 +123,7 @@ class ImplicitVAE(nn.Module):
 		self.no_samples = config.gen_samples_train
 		self.z_sampler = normal.Normal(0, 1)
 		self.z_dim = config.noise_dim_inr
+		self.device = config.device
 
 	def encode(self, x):
 		return self.encoder(x)
@@ -142,13 +143,13 @@ class ImplicitVAE(nn.Module):
 		noise_list = []
 		manifold_pred_list = []
 		for i in range(self.no_samples):
-			noise = self.z_sampler.sample([partial_pts.size(0), self.z_dim])
+			noise = self.z_sampler.sample([partial_pts.size(0), self.z_dim]).to(self.device)
 			noise_list.append(noise)
-			multi_noise = noise.unsqueeze(1).repeat(1, self.n_pts, 1)
+			multi_noise = noise.unsqueeze(1).repeat(1, self.n_pts, 1).to(self.device)
 			manifold_pred = self.decoder(torch.cat([manifold_pts, multi_z, multi_noise], dim=-1)).squeeze(-1)
 			manifold_pred_list.append(manifold_pred)
 
-		noise_list = torch.stack(noise_list, 1)
+		noise_list = torch.stack(noise_list, 1).to(self.device)
 		manifold_pred_list = torch.stack(manifold_pred_list, 1)
 
 		manifold_nearest, noise_used = get_nearest_mapping(self.dci_db, manifold_pred_list, self.zeros, noise_list)
