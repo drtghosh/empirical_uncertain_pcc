@@ -96,7 +96,7 @@ class BaseTrainer(pl.LightningModule):
 check_callback = ModelCheckpoint(
     dirpath=args.model_dir,
     filename='model-{epoch:02d}',
-    save_top_k=2,
+    save_top_k=-1,
     save_last=True
 )
 lr_monitor = LearningRateMonitor(logging_interval='step')
