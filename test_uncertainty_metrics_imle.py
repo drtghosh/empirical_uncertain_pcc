@@ -59,6 +59,7 @@ def test_imle_gen_metrics():
 		gen_mu_matched = gen_clouds.mean(dim=0)
 		gen_std_matched = gen_clouds.std(dim=0)
 		print(torch.norm(gen_std_matched, dim=[1]))
+		print(torch.norm(gen_std_matched, dim=[1]).shape)
 		break
 
 
