@@ -58,8 +58,8 @@ def test_imle_gen_metrics():
 			gen_clouds[i] = gen_clouds[i][col_ind, :]
 		gen_mu_matched = gen_clouds.mean(dim=0)
 		gen_std_matched = gen_clouds.std(dim=0)
-		print(gen_mu_matched.shape)
-		print(gen_std_matched.shape)
+		print(gen_std_matched.max())
+		print(gen_std_matched.min())
 		break
 
 
