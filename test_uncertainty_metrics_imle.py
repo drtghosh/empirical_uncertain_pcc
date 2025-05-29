@@ -36,7 +36,15 @@ def test_imle_gen_metrics():
 		os.makedirs(save_dir)
 
 	# test
-	for _ in tqdm(range(num_test)):
+	naive_all_std_norms = torch.zeros(config.n_pts * num_test)
+	naive_max_std_norms = torch.zeros(num_test)
+	naive_avg_std_norms = torch.zeros(num_test)
+	naive_min_std_norms = torch.zeros(num_test)
+	matched_all_std_norms = torch.zeros(config.n_pts * num_test)
+	matched_max_std_norms = torch.zeros(num_test)
+	matched_avg_std_norms = torch.zeros(num_test)
+	matched_min_std_norms = torch.zeros(num_test)
+	for it in tqdm(range(num_test)):
 		data = next(test_loader)
 		with torch.no_grad():
 			trainer.forward(data, False)
@@ -50,6 +58,14 @@ def test_imle_gen_metrics():
 		# naive estimation
 		gen_mu_naive = gen_clouds.mean(dim=0)
 		gen_std_naive = gen_clouds.std(dim=0)
+		std_norm_naive = torch.norm(gen_std_naive, dim=[1])
+		naive_all_std_norms[it * config.n_pts:(it+1) * config.n_pts] = std_norm_naive
+		std_max_naive = std_norm_naive.max()
+		naive_max_std_norms[it] = std_max_naive
+		std_avg_naive = std_norm_naive.mean()
+		naive_avg_std_norms[it] = std_avg_naive
+		std_min_naive = std_norm_naive.min()
+		naive_min_std_norms[it] = std_min_naive
 
 		# linear assignment estimation
 		for i in range(1, len(gen_clouds)):
@@ -58,9 +74,16 @@ def test_imle_gen_metrics():
 			gen_clouds[i] = gen_clouds[i][col_ind, :]
 		gen_mu_matched = gen_clouds.mean(dim=0)
 		gen_std_matched = gen_clouds.std(dim=0)
-		print(torch.norm(gen_std_matched, dim=[1]))
-		print(torch.norm(gen_std_matched, dim=[1]).shape)
-		break
+		std_norm_matched = torch.norm(gen_std_matched, dim=[1])
+		matched_all_std_norms[it * config.n_pts:(it + 1) * config.n_pts] = std_norm_matched
+		std_max_matched = std_norm_matched.max()
+		matched_max_std_norms[it] = std_max_matched
+		std_avg_matched = std_norm_matched.mean()
+		matched_avg_std_norms[it] = std_avg_matched
+		std_min_matched = std_norm_matched.min()
+		matched_min_std_norms[it] = std_min_matched
+		print(matched_all_std_norms)
+		print(matched_max_std_norms)
 
 
 if __name__ == '__main__':
