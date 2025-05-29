@@ -98,12 +98,12 @@ def test_imle_gen_metrics():
 			_, col_ind = linear_sum_assignment(cost_matrix.cpu().detach().numpy())
 			gen_clouds[i] = gen_clouds[i][col_ind, :]
 		# mean
-		gen_mu_matched = gen_clouds.mean(dim=0)
+		gen_mu_matched = gen_clouds.mean(dim=0).to(config.device)
 		matched_mean_udhs[it] = ldf(trainer.partial_pc, gen_mu_matched.transpose(1, 0).unsqueeze(0))
 		emd_dis_matched, _ = criterion(gen_mu_matched.unsqueeze(0), trainer.complete_pc.transpose(1, 2), 0.05, 3000)
 		matched_mean_emds[it] = torch.mean(torch.sqrt(emd_dis_matched))
 		# std
-		gen_std_matched = gen_clouds.std(dim=0)
+		gen_std_matched = gen_clouds.std(dim=0).to(config.device)
 		std_norm_matched = torch.norm(gen_std_matched, dim=[1])
 		matched_all_std_norms[it * config.n_pts:(it + 1) * config.n_pts] = std_norm_matched
 		std_max_matched = std_norm_matched.max()
