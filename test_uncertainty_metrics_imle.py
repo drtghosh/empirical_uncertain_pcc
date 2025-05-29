@@ -22,6 +22,8 @@ def plot_distances(distances, n_bins=20):
 	fig, axs = plt.subplots(1, 1, tight_layout=True)
 	# N is the count in each bin, bins is the lower-limit of the bin
 	N, bins, patches = axs.hist(distances.cpu().numpy(), bins=n_bins, density=True)
+	print(N)
+	print(N.max())
 
 	# We'll color code by height, but you could use any scalar
 	fracs = N / N.max()
