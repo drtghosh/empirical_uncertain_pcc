@@ -134,8 +134,8 @@ def test_imle_gen_metrics():
 		std_min_matched = std_norm_matched.min()
 		matched_min_std_norms[it] = std_min_matched
 
-	# plot emds
-	plot_distances(all_emds)
+		# plot emds
+		plot_distances(all_emds)
 
 
 if __name__ == '__main__':
