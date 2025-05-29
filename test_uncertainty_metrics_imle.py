@@ -13,12 +13,13 @@ from scipy.optimize import linear_sum_assignment
 from metrics import ldf
 from metrics.EMD import emd
 
+import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib import colors
 from matplotlib.ticker import PercentFormatter
 
 
-def plot_distances(distances, n_bins=20):
+def plot_distances(distances, n_bins=20, save_dir=None, filename=None):
 	fig, axs = plt.subplots(1, 1, tight_layout=True)
 	# N is the count in each bin, bins is the lower-limit of the bin
 	N, bins, patches = axs.hist(distances.cpu().numpy(), bins=n_bins, density=True)
@@ -34,7 +35,32 @@ def plot_distances(distances, n_bins=20):
 		color = plt.cm.viridis(norm(thisfrac))
 		thispatch.set_facecolor(color)
 	axs.yaxis.set_major_formatter(PercentFormatter(xmax=1))
-	plt.show()
+	plt.savefig(os.path.join(save_dir, filename + '.png'))
+
+
+def plot_deviations(deviations, n_bins=20, save_dir=None, filename=None):
+	fig, axs = plt.subplots(1, 1, tight_layout=True)
+	# N is the count in each bin, bins is the lower-limit of the bin
+	N, bins, patches = axs.hist(deviations.cpu().numpy(), bins=n_bins, density=True)
+
+	# We'll color code by height, but you could use any scalar
+	fracs = N / N.max()
+
+	# we need to normalize the data to 0..1 for the full range of the colormap
+	norm = colors.Normalize(fracs.min(), fracs.max())
+
+	# Now, we'll loop through our objects and set the color of each accordingly
+	for thisfrac, thispatch in zip(fracs, patches):
+		color = plt.cm.viridis(norm(thisfrac))
+		thispatch.set_facecolor(color)
+	axs.yaxis.set_major_formatter(PercentFormatter(xmax=1))
+	plt.savefig(os.path.join(save_dir, filename + '.png'))
+
+
+def plot_tensor(tensor, x_label=None, save_dir=None, filename=None):
+	pt = sns.displot(tensor.cpu().numpy(), stat='percent', kde=True, kind='hist', element="step", bins=30)
+	pt.set(xlabel=x_label)
+	pt.figure.savefig(os.path.join(save_dir, filename + '.png'))
 
 
 def test_imle_gen_metrics():
@@ -135,7 +161,24 @@ def test_imle_gen_metrics():
 		matched_min_std_norms[it] = std_min_matched
 
 	# plot emds
-	plot_distances(all_emds)
+	plot_tensor(all_emds, "Earth mover's distance", save_dir, 'all_emds')
+	plot_tensor(matched_mean_emds, "Earth mover's distance", save_dir, 'matched_mean_emds')
+	plot_tensor(naive_mean_emds, "Earth mover's distance", save_dir, 'naive_mean_emds')
+
+	# plot udhs
+	plot_tensor(all_udhs, "Unidirectional Hausdorff distance", save_dir, 'all_udhs')
+	plot_tensor(matched_mean_udhs, "Unidirectional Hausdorff distance", save_dir, 'matched_mean_udhs')
+	plot_tensor(naive_mean_uhds, "Unidirectional Hausdorff distance", save_dir, 'naive_mean_uhds')
+
+	# plot stds
+	plot_tensor(naive_all_std_norms, "Standard deviation norm", save_dir, 'naive_all_std_norms')
+	plot_tensor(naive_max_std_norms, "Standard deviation norm", save_dir, 'naive_max_std_norms')
+	plot_tensor(naive_avg_std_norms, "Standard deviation norm", save_dir, 'naive_avg_std_norms')
+	plot_tensor(naive_min_std_norms, "Standard deviation norm", save_dir, 'naive_min_std_norms')
+	plot_tensor(matched_all_std_norms, "Standard deviation norm", save_dir, 'matched_all_std_norms')
+	plot_tensor(matched_max_std_norms, "Standard deviation norm", save_dir, 'matched_max_std_norms')
+	plot_tensor(matched_avg_std_norms, "Standard deviation norm", save_dir, 'matched_avg_std_norms')
+	plot_tensor(matched_min_std_norms, "Standard deviation norm", save_dir, 'matched_min_std_norms')
 
 
 if __name__ == '__main__':
