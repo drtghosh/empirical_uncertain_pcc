@@ -14,6 +14,27 @@ from metrics import ldf
 from metrics.EMD import emd
 
 import matplotlib.pyplot as plt
+from matplotlib import colors
+from matplotlib.ticker import PercentFormatter
+
+
+def plot_distances(distances, n_bins=20):
+	fig, axs = plt.subplots(1, 1, tight_layout=True)
+	# N is the count in each bin, bins is the lower-limit of the bin
+	N, bins, patches = axs.hist(distances.cpu().numpy(), bins=n_bins, density=True)
+
+	# We'll color code by height, but you could use any scalar
+	fracs = N / N.max()
+
+	# we need to normalize the data to 0..1 for the full range of the colormap
+	norm = colors.Normalize(fracs.min(), fracs.max())
+
+	# Now, we'll loop through our objects and set the color of each accordingly
+	for thisfrac, thispatch in zip(fracs, patches):
+		color = plt.cm.viridis(norm(thisfrac))
+		thispatch.set_facecolor(color)
+	axs.yaxis.set_major_formatter(PercentFormatter(xmax=1))
+	plt.show()
 
 
 def test_imle_gen_metrics():
@@ -113,9 +134,8 @@ def test_imle_gen_metrics():
 		std_min_matched = std_norm_matched.min()
 		matched_min_std_norms[it] = std_min_matched
 
-		# plot emds
-		plt.hist(all_emds.cpu().numpy())
-		plt.show()
+	# plot emds
+	plot_distances(all_emds)
 
 
 if __name__ == '__main__':
