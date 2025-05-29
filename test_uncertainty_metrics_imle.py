@@ -21,6 +21,8 @@ from matplotlib.ticker import PercentFormatter
 def plot_distances(distances, n_bins=20):
 	fig, axs = plt.subplots(1, 1, tight_layout=True)
 	# N is the count in each bin, bins is the lower-limit of the bin
+	print(distances.cpu().numpy())
+	print(distances.cpu().numpy()[0])
 	N, bins, patches = axs.hist(distances.cpu().numpy(), bins=n_bins, density=True)
 	print(N)
 	print(N.max())
