@@ -21,11 +21,7 @@ from matplotlib.ticker import PercentFormatter
 def plot_distances(distances, n_bins=20):
 	fig, axs = plt.subplots(1, 1, tight_layout=True)
 	# N is the count in each bin, bins is the lower-limit of the bin
-	print(distances.cpu().numpy())
-	print(distances.cpu().numpy()[0])
 	N, bins, patches = axs.hist(distances.cpu().numpy(), bins=n_bins, density=True)
-	print(N)
-	print(N.max())
 
 	# We'll color code by height, but you could use any scalar
 	fracs = N / N.max()
@@ -37,7 +33,7 @@ def plot_distances(distances, n_bins=20):
 	for thisfrac, thispatch in zip(fracs, patches):
 		color = plt.cm.viridis(norm(thisfrac))
 		thispatch.set_facecolor(color)
-	# axs.yaxis.set_major_formatter(PercentFormatter(xmax=1))
+	axs.yaxis.set_major_formatter(PercentFormatter(xmax=1))
 	plt.show()
 
 
@@ -138,8 +134,8 @@ def test_imle_gen_metrics():
 		std_min_matched = std_norm_matched.min()
 		matched_min_std_norms[it] = std_min_matched
 
-		# plot emds
-		plot_distances(all_emds)
+	# plot emds
+	plot_distances(all_emds)
 
 
 if __name__ == '__main__':
