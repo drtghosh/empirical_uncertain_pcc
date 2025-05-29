@@ -44,22 +44,22 @@ def test_imle_gen_metrics():
 	criterion = emd()
 	# test
 	# things to store for mean
-	all_emds = torch.zeros(config.gen_samples_test * num_test)
-	naive_mean_emds = torch.zeros(num_test)
-	matched_mean_emds = torch.zeros(num_test)
-	all_udhs = torch.zeros(config.gen_samples_test * num_test)
-	naive_mean_uhds = torch.zeros(num_test)
-	matched_mean_udhs = torch.zeros(num_test)
+	all_emds = torch.zeros(config.gen_samples_test * num_test).to(config.device)
+	naive_mean_emds = torch.zeros(num_test).to(config.device)
+	matched_mean_emds = torch.zeros(num_test).to(config.device)
+	all_udhs = torch.zeros(config.gen_samples_test * num_test).to(config.device)
+	naive_mean_uhds = torch.zeros(num_test).to(config.device)
+	matched_mean_udhs = torch.zeros(num_test).to(config.device)
 
 	# things to store for std
-	naive_all_std_norms = torch.zeros(config.n_pts * num_test)
-	naive_max_std_norms = torch.zeros(num_test)
-	naive_avg_std_norms = torch.zeros(num_test)
-	naive_min_std_norms = torch.zeros(num_test)
-	matched_all_std_norms = torch.zeros(config.n_pts * num_test)
-	matched_max_std_norms = torch.zeros(num_test)
-	matched_avg_std_norms = torch.zeros(num_test)
-	matched_min_std_norms = torch.zeros(num_test)
+	naive_all_std_norms = torch.zeros(config.n_pts * num_test).to(config.device)
+	naive_max_std_norms = torch.zeros(num_test).to(config.device)
+	naive_avg_std_norms = torch.zeros(num_test).to(config.device)
+	naive_min_std_norms = torch.zeros(num_test).to(config.device)
+	matched_all_std_norms = torch.zeros(config.n_pts * num_test).to(config.device)
+	matched_max_std_norms = torch.zeros(num_test).to(config.device)
+	matched_avg_std_norms = torch.zeros(num_test).to(config.device)
+	matched_min_std_norms = torch.zeros(num_test).to(config.device)
 	# loop
 	for it in tqdm(range(num_test)):
 		data = next(test_loader)
@@ -77,12 +77,12 @@ def test_imle_gen_metrics():
 
 		# naive estimation
 		# mean
-		gen_mu_naive = gen_clouds.mean(dim=0)
+		gen_mu_naive = gen_clouds.mean(dim=0).to(config.device)
 		naive_mean_uhds[it] = ldf(trainer.partial_pc, gen_mu_naive.transpose(1, 0).unsqueeze(0))
 		emd_dis_naive, _ = criterion(gen_mu_naive.unsqueeze(0), trainer.complete_pc.transpose(1, 2), 0.05, 3000)
 		naive_mean_emds[it] = torch.mean(torch.sqrt(emd_dis_naive))
 		# std
-		gen_std_naive = gen_clouds.std(dim=0)
+		gen_std_naive = gen_clouds.std(dim=0).to(config.device)
 		std_norm_naive = torch.norm(gen_std_naive, dim=[1])
 		naive_all_std_norms[it * config.n_pts:(it+1) * config.n_pts] = std_norm_naive
 		std_max_naive = std_norm_naive.max()
@@ -114,7 +114,7 @@ def test_imle_gen_metrics():
 		matched_min_std_norms[it] = std_min_matched
 
 		# plot emds
-		plt.hist(all_emds.numpy())
+		plt.hist(all_emds.cpu().numpy())
 		plt.show()
 
 
