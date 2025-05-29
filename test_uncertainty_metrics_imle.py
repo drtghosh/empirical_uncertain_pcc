@@ -33,7 +33,7 @@ def plot_distances(distances, n_bins=20):
 	for thisfrac, thispatch in zip(fracs, patches):
 		color = plt.cm.viridis(norm(thisfrac))
 		thispatch.set_facecolor(color)
-	axs.yaxis.set_major_formatter(PercentFormatter(xmax=1))
+	# axs.yaxis.set_major_formatter(PercentFormatter(xmax=1))
 	plt.show()
 
 
