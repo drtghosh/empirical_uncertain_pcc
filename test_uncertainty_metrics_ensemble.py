@@ -19,7 +19,7 @@ import seaborn as sns
 def plot_tensor(tensor, x_label=None, save_dir=None, filename=None):
 	pt = sns.displot(tensor.cpu().numpy(), stat='percent', kde=True, kind='hist', element="step", bins=30)
 	pt.set(xlabel=x_label)
-	pt.figure.savefig(os.path.join(save_dir, filename + '.png'))
+	pt.figure.savefig(os.path.join(save_dir, filename + '.png'), bbox_inches="tight")
 
 
 def test_imle_gen_metrics():
