@@ -175,18 +175,19 @@ def test_con():
                 posterior_var = cov_bb_space - cov_pb_space.T @ cov_inv_space @ cov_pb_space
                 posterior_diag = torch.diagonal(posterior_var, 0).to(trainer.device)
                 grid_posterior_var[i * config.gp_batch: (i + 1) * config.gp_batch] = posterior_diag
+            print(grid_posterior_var)
 
-            for i in range(num_batches):
+            '''for i in range(num_batches):
                 b = grid_embedding[i * config.gp_batch: (i + 1) * config.gp_batch]
                 # bs = grid_data[i * config.gp_batch: (i + 1) * config.gp_batch]
                 cov_pb = cov_fn(test_embedding, b).evaluate_kernel().to_dense()
                 # cov_pb_space = cov_fn_space(trainer.partial_pc[0].transpose(1, 0), bs).evaluate_kernel().to_dense()
-                # if (i+1) % 32 == 0:
+                # if (i+1) % 32 == 0:'''
                 '''if 1199 <= i <= 1263:
                     heatmap_pb = sns.heatmap(cov_pb.cpu().numpy(), cbar=False)
                     heatmap8 = heatmap_pb.get_figure()
                     heatmap8.savefig(os.path.join(pc_dir, f'heatmap_pb{i}.jpg'))'''
-                # cov_bb = cov_fn(b, b).evaluate_kernel().to_dense()
+                '''# cov_bb = cov_fn(b, b).evaluate_kernel().to_dense()
                 # cov_bb_space = cov_fn_space(bs, bs).evaluate_kernel().to_dense()
                 posterior_mean = 1 + cov_pb.T @ cov_inv @ (test_label - 1)
                 # posterior_var = cov_bb - cov_pb.T @ cov_inv @ cov_pb
@@ -224,7 +225,7 @@ def test_con():
             minus_std = shifted_mean - grid_posterior_var.cpu().numpy()
             vertices_m, faces_m, normals_m, values_m = marching_cubes(np.reshape(minus_std, grid_sizes, order='F'),
                                                                       level=0.0)
-            write_mesh(os.path.join(pc_dir, 'std_minus.obj'), vertices_m, faces_m)
+            write_mesh(os.path.join(pc_dir, 'std_minus.obj'), vertices_m, faces_m)'''
 
 
 if __name__ == '__main__':
