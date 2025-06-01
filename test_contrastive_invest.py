@@ -144,9 +144,9 @@ def test_con():
 
             # gaussian process
             cov_fn = gpytorch.kernels.RBFKernel(ard_num_dims=test_embedding.size(-1)).to(trainer.device)
-            cov_fn_space = gpytorch.kernels.RBFKernel(ard_num_dims=3)
+            cov_fn_space = gpytorch.kernels.RBFKernel(ard_num_dims=3).to(trainer.device)
             cov_pp = cov_fn(test_embedding).evaluate_kernel().to_dense()
-            cov_pp_space = cov_fn_space(trainer.partial_pc[0].transpose(1, 0).cpu()).evaluate_kernel().to_dense()
+            cov_pp_space = cov_fn_space(trainer.partial_pc[0].transpose(1, 0)).evaluate_kernel().to_dense()
             '''heatmap_pp = sns.heatmap(cov_pp.cpu().numpy(), cbar=False)
             heatmap7 = heatmap_pp.get_figure()
             heatmap7.savefig(os.path.join(pc_dir, 'heatmap_pp.jpg'))'''
@@ -154,7 +154,7 @@ def test_con():
             cov_with_noise = (cov_pp + additional_noise)
             cov_inv = torch.linalg.inv(cov_with_noise)
             # cov_space_with_noise = (cov_pp_space + additional_noise.cpu())
-            cov_inv_space = torch.linalg.inv((cov_pp_space + additional_noise.cpu()))
+            cov_inv_space = torch.linalg.inv((cov_pp_space + additional_noise))
             assert grid_embedding.size(
                 0) % config.gp_batch == 0, 'Number of grid points required to be a multiple of batch size'
             num_batches = grid_embedding.size(0) // config.gp_batch
@@ -162,15 +162,15 @@ def test_con():
             grid_posterior_var = torch.empty(grid_embedding.size(0))
             for i in range(num_batches):
                 b = grid_embedding[i * config.gp_batch: (i + 1) * config.gp_batch]
-                bs = grid_data[i * config.gp_batch: (i + 1) * config.gp_batch].cpu()
+                bs = grid_data[i * config.gp_batch: (i + 1) * config.gp_batch]
                 cov_pb = cov_fn(test_embedding, b).evaluate_kernel().to_dense()
-                cov_pb_space = cov_fn_space(trainer.partial_pc[0].transpose(1, 0).cpu(), bs).evaluate_kernel().to_dense()
+                cov_pb_space = cov_fn_space(trainer.partial_pc[0].transpose(1, 0), bs).evaluate_kernel().to_dense()
                 # if (i+1) % 32 == 0:
                 '''if 1199 <= i <= 1263:
                     heatmap_pb = sns.heatmap(cov_pb.cpu().numpy(), cbar=False)
                     heatmap8 = heatmap_pb.get_figure()
                     heatmap8.savefig(os.path.join(pc_dir, f'heatmap_pb{i}.jpg'))'''
-                cov_bb = cov_fn(b, b).evaluate_kernel().to_dense()
+                # cov_bb = cov_fn(b, b).evaluate_kernel().to_dense()
                 cov_bb_space = cov_fn_space(bs, bs).evaluate_kernel().to_dense()
                 posterior_mean = 1 + cov_pb.T @ cov_inv @ (test_label - 1)
                 # posterior_var = cov_bb - cov_pb.T @ cov_inv @ cov_pb
