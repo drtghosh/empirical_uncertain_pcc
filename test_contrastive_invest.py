@@ -189,6 +189,7 @@ def test_con():
                                                               level=0.0)
             W2 = fd_interpolate(vertices, grid_sizes, spacing, corner)
             var_on_vertices = W2 @ grid_posterior_var.cpu().numpy()
+            print(var_on_vertices)
             # save mesh into .obj file
             write_mesh(os.path.join(pc_dir, 'mean_shifted.obj'), vertices, faces)
             write_ply(os.path.join(pc_dir, 'mean_shifted_with_color.ply'), vertices, faces, var_on_vertices)
