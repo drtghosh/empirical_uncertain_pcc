@@ -34,17 +34,20 @@ def test_hessian_simple():
     box_min = torch.amin(pc, 0) - eps
     box_max = torch.amax(pc, 0) + eps
 
-    grid_sizes = np.ones(3, dtype=np.int32) * 100
+    grid_sizes = np.ones(3, dtype=np.int32) * 128
     grid_vertices = np.meshgrid(
         *[np.linspace(box_min[d], box_max[d], grid_sizes[d]) for d in range(3)])
     grid_vertices = np.stack(grid_vertices, axis=-1).reshape(-1, 3)
     grid_vertices = torch.tensor(grid_vertices, dtype=torch.float32)
-    multi_z = z.unsqueeze(1).repeat(1, len(grid_vertices), 1)
-    multi_noise = noise.unsqueeze(1).repeat(1, len(grid_vertices), 1).to(config.device)
+    loop = len(grid_vertices) // 128
+    multi_z = z.unsqueeze(1).repeat(1, loop, 1)
+    multi_noise = noise.unsqueeze(1).repeat(1, loop, 1).to(config.device)
     grid_vertices = grid_vertices.unsqueeze(0).to(config.device)
-    pred = model.decoder(torch.cat([grid_vertices, multi_z, multi_noise], dim=-1)).squeeze(-1)
-    print(pred)
-    print(pred.shape)
+    for i in range(128):
+        pred = model.decoder(torch.cat([grid_vertices[:, i*loop:(i+1)*loop, :], multi_z, multi_noise], dim=-1)).squeeze(-1)
+        print(pred)
+        print(pred.shape)
+        break
 
 
 if __name__ == '__main__':
