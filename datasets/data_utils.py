@@ -479,8 +479,6 @@ def write_ply(filename, vertices, faces=None, colors=None, cmap='BuGn'):
             else:
                 C = colors
         # This should be vectorized
-        print(C.shape)
-        print(colors.shape)
         for i in range(vertices.shape[0]):
             f.write("{} {} {} {} {} {} 255\n".format(vertices[i, 0], vertices[i, 1], vertices[i, 2], int(C[i, 0]),
                                                      int(C[i, 1]), int(C[i, 2])))
