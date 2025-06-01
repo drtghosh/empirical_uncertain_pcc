@@ -162,7 +162,8 @@ def test_con():
             grid_posterior_var = torch.empty(grid_embedding.size(0))
 
             for i in range(num_batches):
-                bs = grid_data[i * config.gp_batch: (i + 1) * config.gp_batch]
+                bs = grid_data[0][i * config.gp_batch: (i + 1) * config.gp_batch]
+                print(bs.shape)
                 cov_pb_space = cov_fn_space(trainer.partial_pc[0].transpose(1, 0), bs).evaluate_kernel().to_dense()
                 # if (i+1) % 32 == 0:
                 '''if 1199 <= i <= 1263:
