@@ -2,17 +2,15 @@ import torch
 import pytorch_lightning as pl
 
 from configs import get_config
-from tools import get_trainer
-from datasets import get_dataloader
-from datasets.data_utils import cycle
 
 from models import get_model
+from datasets.data_utils import read_point_cloud_ply
 
 import os
 from tqdm import tqdm
 
 
-def test_hessian_simple():
+def test_hessian_simple(filepath):
     # create experiment config containing all hyperparameters
     config = get_config('test')
     config.latent_dim = 256
@@ -23,7 +21,11 @@ def test_hessian_simple():
     new_state_dict = {k.replace("net.", ""): v for k, v in state_dict.items()}
     model = get_model(config, "HessSimple")
     model.load_state_dict(new_state_dict)
-    print(model)
+    pc = read_point_cloud_ply(os.path.join(config.result_dir, 'partial.ply'))
+    pc = torch.tensor(pc, dtype=torch.float32).transpose(1, 0).unsqueeze(0)
+    enc = model.encoder(pc)
+    print(enc)
+    print(enc.shape)
 
 
 if __name__ == '__main__':
