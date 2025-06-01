@@ -447,7 +447,7 @@ def write_ply(filename, vertices, faces=None, colors=None, cmap='BuGn'):
     """
 
     vertices = vertices.astype(float)
-    f = open(filename,"w")
+    f = open(filename, "w")
     f.write("ply\nformat {} 1.0\n".format('ascii'))
     f.write("element vertex {}\n".format(vertices.shape[0]))
     f.write("property double x\n")
@@ -479,8 +479,11 @@ def write_ply(filename, vertices, faces=None, colors=None, cmap='BuGn'):
             else:
                 C = colors
         # This should be vectorized
+        print(C)
+        print(C.shape)
         for i in range(vertices.shape[0]):
-            f.write("{} {} {} {} {} {} 255\n".format(vertices[i,0],vertices[i,1],vertices[i,2],int(C[i,0]),int(C[i,1]),int(C[i,2])))
+            f.write("{} {} {} {} {} {} 255\n".format(vertices[i, 0], vertices[i, 1], vertices[i, 2], int(C[i, 0]),
+                                                     int(C[i, 1]), int(C[i, 2])))
     # This should be vectorized
     if faces is not None:
         for i in range(faces.shape[0]):
