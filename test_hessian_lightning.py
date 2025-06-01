@@ -26,7 +26,7 @@ def test_hessian_simple():
     pc = read_point_cloud_ply(os.path.join(config.result_dir, 'partial.ply'))
     pc = torch.tensor(pc, dtype=torch.float32)
     enc_pc = positional_encoding(pc).transpose(1, 0).unsqueeze(0)
-    enc = model.encoder(enc_pc)
+    z = model.encoder(enc_pc)
     # find the bounding box for all dataset
     box_min = np.amin(pc, 0) - eps
     box_max = np.amax(pc, 0) + eps
@@ -34,8 +34,8 @@ def test_hessian_simple():
     grid_sizes = np.ones(3, dtype=np.int32) * 128
     grid_vertices = np.meshgrid(
         *[np.linspace(box_min[d], box_max[d], grid_sizes[d]) for d in range(3)])
+    multi_z = z.unsqueeze(1).repeat(1, len(grid_vertices), 1)
     grid_vertices = torch.from_numpy(grid_vertices).float().unsqueeze(0)
-
 
 if __name__ == '__main__':
     test_hessian_simple()
