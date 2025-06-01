@@ -12,19 +12,16 @@ import os
 from tqdm import tqdm
 
 
-class INR(pl.LightningModule):
-
-    def __init__(self):
-        super().__init__()
-
-
 def test_hessian_simple():
     # create experiment config containing all hyperparameters
     config = get_config('test')
 
     ckpt_path = os.path.join(config.model_dir, 'model.ckpt')
+    ckpt = torch.load(ckpt_path)
+    state_dict = ckpt["state_dict"]
+    new_state_dict = {k.replace("net.", ""): v for k, v in state_dict.items()}
     model = get_model(config, "HessSimple")
-    model = INR.load_from_checkpoint(ckpt_path)
+    model.load_state_dict(new_state_dict)
     print(model)
 
 
