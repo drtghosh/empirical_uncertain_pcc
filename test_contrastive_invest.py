@@ -168,6 +168,7 @@ def test_con():
                 grid_posterior_mean[i * config.gp_batch: (i + 1) * config.gp_batch] = posterior_mean
                 grid_posterior_var[i * config.gp_batch: (i + 1) * config.gp_batch] = posterior_diag
 
+            print(grid_posterior_var.shape)
             # shift posterior mean
             W = fd_interpolate(partial_points, grid_sizes, spacing, corner)
             shift = np.sum(W @ grid_posterior_mean.cpu().numpy()) / partial_points.shape[0]
