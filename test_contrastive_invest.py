@@ -162,7 +162,7 @@ def test_con():
                     heatmap8 = heatmap_pb.get_figure()
                     heatmap8.savefig(os.path.join(pc_dir, f'heatmap_pb{i}.jpg'))
                 cov_bb = cov_fn(b, b).evaluate_kernel().to_dense()
-                posterior_mean = cov_pb.T @ cov_inv @ test_label
+                posterior_mean = 1 + cov_pb.T @ cov_inv @ (test_label - 1)
                 posterior_var = cov_bb - cov_pb.T @ cov_inv @ cov_pb
                 posterior_diag = torch.diagonal(posterior_var, 0)
                 grid_posterior_mean[i * config.gp_batch: (i + 1) * config.gp_batch] = posterior_mean
