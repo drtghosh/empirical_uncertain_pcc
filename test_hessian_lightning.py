@@ -23,10 +23,11 @@ def test_hessian_simple():
     new_state_dict = {k.replace("net.", ""): v for k, v in state_dict.items()}
     model = get_model(config, "HessSimple")
     model.load_state_dict(new_state_dict)
+    model.to(config.device)
     pc = read_point_cloud_ply(os.path.join(config.result_dir, 'partial.ply'))
     pc = torch.tensor(pc, dtype=torch.float32)
-    enc_pc = positional_encoding(pc).transpose(1, 0).unsqueeze(0)
-    z = model.encoder(enc_pc)
+    enc_pc = positional_encoding(pc).transpose(1, 0).unsqueeze(0).to(config.device)
+    z = model.encoder(enc_pc).to(config.device)
     z_sampler = normal.Normal(0, 1)
     noise = z_sampler.sample([pc.size(0), config.noise_dim_inr]).to(config.device)
     # find the bounding box for all dataset
