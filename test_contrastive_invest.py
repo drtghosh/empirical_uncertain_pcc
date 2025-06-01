@@ -175,7 +175,8 @@ def test_con():
             # marching cubes
             vertices, faces, normals, values = marching_cubes(np.reshape(shifted_mean, grid_sizes, order='F'),
                                                               level=0.0)
-            var_on_vertices = W @ grid_posterior_var.cpu().numpy()
+            W2 = fd_interpolate(vertices, grid_sizes, spacing, corner)
+            var_on_vertices = W2 @ grid_posterior_var.cpu().numpy()
             # save mesh into .obj file
             write_mesh(os.path.join(pc_dir, 'mean_shifted.obj'), vertices, faces)
             write_ply(os.path.join(pc_dir, 'mean_shifted_with_color.obj'), vertices, faces, var_on_vertices)
