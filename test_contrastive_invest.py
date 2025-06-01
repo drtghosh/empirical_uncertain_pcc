@@ -146,7 +146,7 @@ def test_con():
             cov_fn = gpytorch.kernels.RBFKernel(ard_num_dims=test_embedding.size(-1)).to(trainer.device)
             cov_fn_space = gpytorch.kernels.RBFKernel(ard_num_dims=3).to(trainer.device)
             cov_pp = cov_fn(test_embedding).evaluate_kernel().to_dense()
-            cov_pp_space = cov_fn_space(partial_points.cuda()).evaluate_kernel().to_dense()
+            cov_pp_space = cov_fn_space(trainer.partial_pc[0].transpose(1, 0)).evaluate_kernel().to_dense()
             '''heatmap_pp = sns.heatmap(cov_pp.cpu().numpy(), cbar=False)
             heatmap7 = heatmap_pp.get_figure()
             heatmap7.savefig(os.path.join(pc_dir, 'heatmap_pp.jpg'))'''
@@ -164,7 +164,7 @@ def test_con():
                 b = grid_embedding[i * config.gp_batch: (i + 1) * config.gp_batch]
                 bs = grid_data[i * config.gp_batch: (i + 1) * config.gp_batch]
                 cov_pb = cov_fn(test_embedding, b).evaluate_kernel().to_dense()
-                cov_pb_space = cov_fn_space(partial_points.cuda(), bs).evaluate_kernel().to_dense()
+                cov_pb_space = cov_fn_space(trainer.partial_pc[0].transpose(1, 0), bs).evaluate_kernel().to_dense()
                 # if (i+1) % 32 == 0:
                 '''if 1199 <= i <= 1263:
                     heatmap_pb = sns.heatmap(cov_pb.cpu().numpy(), cbar=False)
