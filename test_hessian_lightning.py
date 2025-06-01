@@ -24,7 +24,8 @@ def test_hessian_simple():
     config = get_config('test')
 
     ckpt_path = os.path.join(config.model_dir, 'model.ckpt')
-    model = INR(config).load_from_checkpoint(ckpt_path)
+    INR(config)
+    model = INR.load_from_checkpoint(ckpt_path)
     print(model)
 
 
