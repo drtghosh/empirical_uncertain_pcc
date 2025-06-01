@@ -15,6 +15,7 @@ from tqdm import tqdm
 def test_hessian_simple():
     # create experiment config containing all hyperparameters
     config = get_config('test')
+    config.latent_dim = 256
 
     ckpt_path = os.path.join(config.model_dir, 'model.ckpt')
     ckpt = torch.load(ckpt_path)
