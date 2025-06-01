@@ -14,9 +14,8 @@ from tqdm import tqdm
 
 class INR(pl.LightningModule):
 
-    def __init__(self, config):
+    def __init__(self):
         super().__init__()
-        self.model = get_model(config, "HessSimple")
 
 
 def test_hessian_simple():
@@ -24,7 +23,6 @@ def test_hessian_simple():
     config = get_config('test')
 
     ckpt_path = os.path.join(config.model_dir, 'model.ckpt')
-    INR(config)
     model = INR.load_from_checkpoint(ckpt_path)
     print(model)
 
