@@ -7,6 +7,8 @@ from configs import get_config
 from models import get_model
 from datasets.data_utils import read_point_cloud_ply, positional_encoding
 
+from torch.distributions import normal
+
 import os
 from tqdm import tqdm
 
@@ -27,6 +29,8 @@ def test_hessian_simple():
     pc = torch.tensor(pc, dtype=torch.float32)
     enc_pc = positional_encoding(pc).transpose(1, 0).unsqueeze(0)
     z = model.encoder(enc_pc)
+    z_sampler = normal.Normal(0, 1)
+    noise = z_sampler.sample([pc.size(0), config.noise_dim_inr]).to(config.device)
     # find the bounding box for all dataset
     box_min = np.amin(pc, 0) - eps
     box_max = np.amax(pc, 0) + eps
@@ -35,7 +39,12 @@ def test_hessian_simple():
     grid_vertices = np.meshgrid(
         *[np.linspace(box_min[d], box_max[d], grid_sizes[d]) for d in range(3)])
     multi_z = z.unsqueeze(1).repeat(1, len(grid_vertices), 1)
+    multi_noise = noise.unsqueeze(1).repeat(1, len(grid_vertices), 1).to(config.device)
     grid_vertices = torch.from_numpy(grid_vertices).float().unsqueeze(0)
+    pred = model.decoder(torch.cat([grid_vertices, multi_z, multi_noise], dim=-1)).squeeze(-1)
+    print(pred)
+    print(pred.shape)
+    
 
 if __name__ == '__main__':
     test_hessian_simple()
