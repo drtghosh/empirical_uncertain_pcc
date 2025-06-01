@@ -179,7 +179,7 @@ def test_con():
             var_on_vertices = W2 @ grid_posterior_var.cpu().numpy()
             # save mesh into .obj file
             write_mesh(os.path.join(pc_dir, 'mean_shifted.obj'), vertices, faces)
-            write_ply(os.path.join(pc_dir, 'mean_shifted_with_color.obj'), vertices, faces, var_on_vertices)
+            write_ply(os.path.join(pc_dir, 'mean_shifted_with_color.ply'), vertices, faces, var_on_vertices)
 
             # without mean shifting
             vertices_og, faces_og, normals_og, values_og = marching_cubes(
