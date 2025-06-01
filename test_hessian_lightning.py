@@ -17,7 +17,6 @@ def test_hessian_simple():
 
     ckpt_path = os.path.join(config.model_dir, 'model.ckpt')
     model = get_model(config, "HessSimple")
-    model.load_state_dict(ckpt_path)
     print(model)
 
 
