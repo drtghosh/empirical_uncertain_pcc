@@ -160,10 +160,9 @@ def test_con():
             num_batches = grid_embedding.size(0) // config.gp_batch
             grid_posterior_mean = torch.empty(grid_embedding.size(0))
             grid_posterior_var = torch.empty(grid_embedding.size(0))
+
             for i in range(num_batches):
-                b = grid_embedding[i * config.gp_batch: (i + 1) * config.gp_batch]
                 bs = grid_data[i * config.gp_batch: (i + 1) * config.gp_batch]
-                cov_pb = cov_fn(test_embedding, b).evaluate_kernel().to_dense()
                 cov_pb_space = cov_fn_space(trainer.partial_pc[0].transpose(1, 0), bs).evaluate_kernel().to_dense()
                 # if (i+1) % 32 == 0:
                 '''if 1199 <= i <= 1263:
@@ -172,12 +171,29 @@ def test_con():
                     heatmap8.savefig(os.path.join(pc_dir, f'heatmap_pb{i}.jpg'))'''
                 # cov_bb = cov_fn(b, b).evaluate_kernel().to_dense()
                 cov_bb_space = cov_fn_space(bs, bs).evaluate_kernel().to_dense()
-                posterior_mean = 1 + cov_pb.T @ cov_inv @ (test_label - 1)
                 # posterior_var = cov_bb - cov_pb.T @ cov_inv @ cov_pb
                 posterior_var = cov_bb_space - cov_pb_space.T @ cov_inv_space @ cov_pb_space
                 posterior_diag = torch.diagonal(posterior_var, 0).to(trainer.device)
-                grid_posterior_mean[i * config.gp_batch: (i + 1) * config.gp_batch] = posterior_mean
                 grid_posterior_var[i * config.gp_batch: (i + 1) * config.gp_batch] = posterior_diag
+
+            for i in range(num_batches):
+                b = grid_embedding[i * config.gp_batch: (i + 1) * config.gp_batch]
+                # bs = grid_data[i * config.gp_batch: (i + 1) * config.gp_batch]
+                cov_pb = cov_fn(test_embedding, b).evaluate_kernel().to_dense()
+                # cov_pb_space = cov_fn_space(trainer.partial_pc[0].transpose(1, 0), bs).evaluate_kernel().to_dense()
+                # if (i+1) % 32 == 0:
+                '''if 1199 <= i <= 1263:
+                    heatmap_pb = sns.heatmap(cov_pb.cpu().numpy(), cbar=False)
+                    heatmap8 = heatmap_pb.get_figure()
+                    heatmap8.savefig(os.path.join(pc_dir, f'heatmap_pb{i}.jpg'))'''
+                # cov_bb = cov_fn(b, b).evaluate_kernel().to_dense()
+                # cov_bb_space = cov_fn_space(bs, bs).evaluate_kernel().to_dense()
+                posterior_mean = 1 + cov_pb.T @ cov_inv @ (test_label - 1)
+                # posterior_var = cov_bb - cov_pb.T @ cov_inv @ cov_pb
+                # posterior_var = cov_bb_space - cov_pb_space.T @ cov_inv_space @ cov_pb_space
+                # posterior_diag = torch.diagonal(posterior_var, 0).to(trainer.device)
+                grid_posterior_mean[i * config.gp_batch: (i + 1) * config.gp_batch] = posterior_mean
+                # grid_posterior_var[i * config.gp_batch: (i + 1) * config.gp_batch] = posterior_diag
 
             # shift posterior mean
             W = fd_interpolate(partial_points, grid_sizes, spacing, corner)
