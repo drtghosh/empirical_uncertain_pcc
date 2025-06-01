@@ -34,7 +34,7 @@ def test_hessian_simple():
     box_min = torch.amin(pc, 0) - eps
     box_max = torch.amax(pc, 0) + eps
 
-    grid_sizes = np.ones(3, dtype=np.int32) * 128
+    grid_sizes = np.ones(3, dtype=np.int32) * 100
     grid_vertices = np.meshgrid(
         *[np.linspace(box_min[d], box_max[d], grid_sizes[d]) for d in range(3)])
     grid_vertices = np.stack(grid_vertices, axis=-1).reshape(-1, 3)
