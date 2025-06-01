@@ -5,6 +5,8 @@ from tools import get_trainer
 from datasets import get_dataloader
 from datasets.data_utils import cycle
 
+from models import get_model
+
 import os
 from tqdm import tqdm
 
@@ -14,8 +16,9 @@ def test_hessian_simple():
     config = get_config('test')
 
     ckpt_path = os.path.join(config.model_dir, 'model.ckpt')
-    ckpt = torch.load(ckpt_path)
-    print(ckpt)
+    model = get_model(config, "HessSimple")
+    model.load_state_dict(ckpt_path)
+    print(model)
 
 
 if __name__ == '__main__':
