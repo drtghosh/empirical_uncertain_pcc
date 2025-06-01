@@ -43,11 +43,12 @@ def test_hessian_simple():
     multi_z = z.unsqueeze(1).repeat(1, loop, 1)
     multi_noise = noise.unsqueeze(1).repeat(1, loop, 1).to(config.device)
     grid_vertices = grid_vertices.unsqueeze(0).to(config.device)
+    all_predictions = []
     for i in range(128):
         pred = model.decoder(torch.cat([grid_vertices[:, i*loop:(i+1)*loop, :], multi_z, multi_noise], dim=-1)).squeeze(-1)
-        print(pred)
-        print(pred.shape)
-        break
+        all_predictions.append(pred)
+    final_pred = torch.stack(all_predictions, dim=0)
+    print(final_pred.size())
 
 
 if __name__ == '__main__':
