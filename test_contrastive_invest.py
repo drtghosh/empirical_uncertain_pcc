@@ -3,14 +3,13 @@ import torch
 from configs import get_config
 from tools import get_trainer
 from datasets import get_dataloader
-from datasets.data_utils import cycle, write_point_cloud_ply, create_grid, create_negative_with_label
+from datasets.data_utils import cycle, write_point_cloud_ply, create_grid, create_negative_with_label, write_ply
 
 import os
 from tqdm import tqdm
 
 import numpy as np
 import gpytorch
-import gpytoolbox
 from gpytoolbox import write_mesh, fd_interpolate
 from skimage.measure import marching_cubes
 
@@ -179,7 +178,7 @@ def test_con():
             var_on_vertices = W @ grid_posterior_var.cpu().numpy()
             # save mesh into .obj file
             write_mesh(os.path.join(pc_dir, 'mean_shifted.obj'), vertices, faces)
-            gpytoolbox.write_ply(os.path.join(pc_dir, 'mean_shifted_with_color.obj'), vertices, faces, var_on_vertices)
+            write_ply(os.path.join(pc_dir, 'mean_shifted_with_color.obj'), vertices, faces, var_on_vertices)
 
             # without mean shifting
             vertices_og, faces_og, normals_og, values_og = marching_cubes(
