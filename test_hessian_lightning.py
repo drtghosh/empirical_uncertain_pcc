@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 from configs import get_config
 
 from models import get_model
-from datasets.data_utils import read_point_cloud_ply
+from datasets.data_utils import read_point_cloud_ply, positional_encoding
 
 import os
 from tqdm import tqdm
@@ -22,8 +22,9 @@ def test_hessian_simple():
     model = get_model(config, "HessSimple")
     model.load_state_dict(new_state_dict)
     pc = read_point_cloud_ply(os.path.join(config.result_dir, 'partial.ply'))
-    pc = torch.tensor(pc, dtype=torch.float32).transpose(1, 0).unsqueeze(0)
-    enc = model.encoder(pc)
+    pc = torch.tensor(pc, dtype=torch.float32)
+    enc_pc = positional_encoding(pc).transpose(1, 0).unsqueeze(0)
+    enc = model.encoder(enc_pc)
     print(enc)
     print(enc.shape)
 
