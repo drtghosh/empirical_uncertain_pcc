@@ -29,7 +29,7 @@ def test_hessian_simple():
     enc_pc = positional_encoding(pc).transpose(1, 0).unsqueeze(0).to(config.device)
     z = model.encoder(enc_pc).to(config.device)
     z_sampler = normal.Normal(0, 1)
-    noise = z_sampler.sample([pc.size(0), config.noise_dim_inr]).to(config.device)
+    noise = z_sampler.sample([1, config.noise_dim_inr]).to(config.device)
     # find the bounding box for all dataset
     box_min = torch.amin(pc, 0) - eps
     box_max = torch.amax(pc, 0) + eps
@@ -39,14 +39,12 @@ def test_hessian_simple():
         *[np.linspace(box_min[d], box_max[d], grid_sizes[d]) for d in range(3)])
     grid_vertices = np.stack(grid_vertices, axis=-1).reshape(-1, 3)
     grid_vertices = torch.tensor(grid_vertices, dtype=torch.float32)
-    # multi_z = z.unsqueeze(1).repeat(1, len(grid_vertices), 1)
-    # multi_noise = noise.unsqueeze(1).repeat(1, len(grid_vertices), 1).to(config.device)
+    multi_z = z.unsqueeze(1).repeat(1, len(grid_vertices), 1)
+    multi_noise = noise.unsqueeze(1).repeat(1, len(grid_vertices), 1).to(config.device)
     grid_vertices = grid_vertices.unsqueeze(0).to(config.device)
-    for j in range(grid_vertices.size(1)):
-        pred = model.decoder(torch.cat([grid_vertices[:, j, :], z.unsqueeze(1), noise.unsqueeze(1)], dim=-1)).squeeze(
-            -1)
-        print(pred)
-        print(pred.shape)
+    pred = model.decoder(torch.cat([grid_vertices, multi_z, multi_noise], dim=-1)).squeeze(-1)
+    print(pred)
+    print(pred.shape)
 
 
 if __name__ == '__main__':
