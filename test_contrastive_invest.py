@@ -92,59 +92,62 @@ def test_con():
             grid_embedding = trainer.model(extended_grid).flatten(0, 1)
 
             # create negative data for the partial data
-            negative_cloud, negative_label = create_negative_with_label(trainer.partial_pc.transpose(1, 2))
-            negative_cloud = negative_cloud.to(trainer.device)
-            # output embedding for negative data
-            extended_negative = torch.cat([negative_cloud, trainer.test_latent.expand(-1, negative_cloud.size(1), -1)],
-                                          2)
-            trainer.model.eval()
-            negative_embedding = trainer.model(extended_negative)
-
-            """
-                Compare embeddings of partial, complete, negative points
-            """
-            part_pair_distance = torch.cdist(trainer.partial_embedding, trainer.partial_embedding, p=2).flatten(0, 1)
-            heatmap_part = sns.heatmap(part_pair_distance.cpu().numpy(), cbar=False)
-            heatmap1 = heatmap_part.get_figure()
-            heatmap1.savefig(os.path.join(pc_dir, 'heatmap_partial.jpg'))
-
-            comp_pair_distance = torch.cdist(trainer.complete_embedding, trainer.complete_embedding, p=2).flatten(0, 1)
-            heatmap_comp = sns.heatmap(comp_pair_distance.cpu().numpy(), cbar=False)
-            heatmap2 = heatmap_comp.get_figure()
-            heatmap2.savefig(os.path.join(pc_dir, 'heatmap_complete.jpg'))
-
-            neg_pair_distance = torch.cdist(negative_embedding, negative_embedding, p=2).flatten(0, 1)
-            heatmap_neg = sns.heatmap(neg_pair_distance.cpu().numpy(), cbar=False)
-            heatmap3 = heatmap_neg.get_figure()
-            heatmap3.savefig(os.path.join(pc_dir, 'heatmap_negative.jpg'))
-
-            part_comp_distance = torch.cdist(trainer.partial_embedding, trainer.complete_embedding, p=2).flatten(0, 1)
-            heatmap_pc = sns.heatmap(part_comp_distance.cpu().numpy(), cbar=False)
-            heatmap4 = heatmap_pc.get_figure()
-            heatmap4.savefig(os.path.join(pc_dir, 'heatmap_part_vs_comp.jpg'))
-
-            part_neg_distance = torch.cdist(trainer.partial_embedding, negative_embedding, p=2).flatten(0, 1)
-            heatmap_pn = sns.heatmap(part_neg_distance.cpu().numpy(), cbar=False)
-            heatmap5 = heatmap_pn.get_figure()
-            heatmap5.savefig(os.path.join(pc_dir, 'heatmap_part_vs_neg.jpg'))
-
-            comp_neg_distance = torch.cdist(trainer.complete_embedding, negative_embedding, p=2).flatten(0, 1)
-            heatmap_cn = sns.heatmap(comp_neg_distance.cpu().numpy(), cbar=False)
-            heatmap6 = heatmap_cn.get_figure()
-            heatmap6.savefig(os.path.join(pc_dir, 'heatmap_comp_vs_neg.jpg'))
+            """ 
+               negative_cloud, negative_label = create_negative_with_label(trainer.partial_pc.transpose(1, 2))
+               negative_cloud = negative_cloud.to(trainer.device)
+               output embedding for negative data
+               extended_negative =torch.cat([negative_cloud, 
+               trainer.test_latent.expand(-1, negative_cloud.size(1), -1)], 2)
+               trainer.model.eval()
+               negative_embedding = trainer.model(extended_negative)
+    
+               Compare embeddings of partial, complete, negative points
+               
+               part_pair_distance = torch.cdist(trainer.partial_embedding, trainer.partial_embedding, p=2).flatten(0, 1)
+               heatmap_part = sns.heatmap(part_pair_distance.cpu().numpy(), cbar=False)
+               heatmap1 = heatmap_part.get_figure()
+               heatmap1.savefig(os.path.join(pc_dir, 'heatmap_partial.jpg'))
+    
+               comp_pair_distance = torch.cdist(trainer.complete_embedding, trainer.complete_embedding, p=2).
+               flatten(0, 1)
+               heatmap_comp = sns.heatmap(comp_pair_distance.cpu().numpy(), cbar=False)
+               heatmap2 = heatmap_comp.get_figure()
+               heatmap2.savefig(os.path.join(pc_dir, 'heatmap_complete.jpg'))
+    
+               neg_pair_distance = torch.cdist(negative_embedding, negative_embedding, p=2).flatten(0, 1)
+               heatmap_neg = sns.heatmap(neg_pair_distance.cpu().numpy(), cbar=False)
+               heatmap3 = heatmap_neg.get_figure()
+               heatmap3.savefig(os.path.join(pc_dir, 'heatmap_negative.jpg'))
+    
+               part_comp_distance = torch.cdist(trainer.partial_embedding, trainer.complete_embedding, p=2).flatten(0, 1)
+               heatmap_pc = sns.heatmap(part_comp_distance.cpu().numpy(), cbar=False)
+               heatmap4 = heatmap_pc.get_figure()
+               heatmap4.savefig(os.path.join(pc_dir, 'heatmap_part_vs_comp.jpg'))
+    
+               part_neg_distance = torch.cdist(trainer.partial_embedding, negative_embedding, p=2).flatten(0, 1)
+               heatmap_pn = sns.heatmap(part_neg_distance.cpu().numpy(), cbar=False)
+               heatmap5 = heatmap_pn.get_figure()
+               heatmap5.savefig(os.path.join(pc_dir, 'heatmap_part_vs_neg.jpg'))
+    
+               comp_neg_distance = torch.cdist(trainer.complete_embedding, negative_embedding, p=2).flatten(0, 1)
+               heatmap_cn = sns.heatmap(comp_neg_distance.cpu().numpy(), cbar=False)
+               heatmap6 = heatmap_cn.get_figure()
+               heatmap6.savefig(os.path.join(pc_dir, 'heatmap_comp_vs_neg.jpg'))"""
 
             # combine test embeddings
-            test_embedding = torch.cat([trainer.partial_embedding, negative_embedding], 1).flatten(0, 1)
+            # test_embedding = torch.cat([trainer.partial_embedding, negative_embedding], 1).flatten(0, 1)
+            test_embedding = trainer.partial_embedding.flatten(0, 1)
 
             # combine test labels
-            test_label = torch.concat((torch.zeros(trainer.partial_pc.size(-1)), negative_label), 0).to(trainer.device)
+            # test_label = torch.concat((torch.zeros(trainer.partial_pc.size(-1)), negative_label), 0)
+            test_label = torch.zeros(trainer.partial_pc.size(-1)).to(trainer.device)
 
             # gaussian process
             cov_fn = gpytorch.kernels.RBFKernel(ard_num_dims=test_embedding.size(-1)).to(trainer.device)
             cov_pp = cov_fn(test_embedding).evaluate_kernel().to_dense()
-            heatmap_pp = sns.heatmap(cov_pp.cpu().numpy(), cbar=False)
+            '''heatmap_pp = sns.heatmap(cov_pp.cpu().numpy(), cbar=False)
             heatmap7 = heatmap_pp.get_figure()
-            heatmap7.savefig(os.path.join(pc_dir, 'heatmap_pp.jpg'))
+            heatmap7.savefig(os.path.join(pc_dir, 'heatmap_pp.jpg'))'''
             additional_noise = config.noise_variance * torch.eye(test_embedding.size(0)).to(trainer.device)
             cov_with_noise = (cov_pp + additional_noise)
             cov_inv = torch.linalg.inv(cov_with_noise)
