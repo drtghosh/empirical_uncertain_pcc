@@ -32,8 +32,9 @@ def test_hessian_simple():
     z_sampler = normal.Normal(0, 1)
     noise = z_sampler.sample([pc.size(0), config.noise_dim_inr]).to(config.device)
     # find the bounding box for all dataset
-    box_min = np.amin(pc, 0) - eps
-    box_max = np.amax(pc, 0) + eps
+    box_min = torch.amin(pc, 0) - eps
+    print(box_min)
+    box_max = torch.amax(pc, 0) + eps
 
     grid_sizes = np.ones(3, dtype=np.int32) * 128
     grid_vertices = np.meshgrid(
@@ -44,7 +45,7 @@ def test_hessian_simple():
     pred = model.decoder(torch.cat([grid_vertices, multi_z, multi_noise], dim=-1)).squeeze(-1)
     print(pred)
     print(pred.shape)
-    
+
 
 if __name__ == '__main__':
     test_hessian_simple()
