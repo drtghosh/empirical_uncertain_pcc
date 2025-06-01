@@ -18,7 +18,7 @@ def test_hessian_simple():
     ckpt_path = os.path.join(config.model_dir, 'model.ckpt')
     ckpt_dict = torch.load(ckpt_path)
     model = get_model(config, "HessSimple")
-    model.load_state_dict(ckpt_dict['state_dict'])
+    model._load_from_state_dict(ckpt_dict['state_dict'])
     print(model)
 
 
