@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 import pytorch_lightning as pl
 
 from configs import get_config
@@ -14,6 +15,7 @@ def test_hessian_simple():
     # create experiment config containing all hyperparameters
     config = get_config('test')
     config.latent_dim = 256
+    eps = 0.25
 
     ckpt_path = os.path.join(config.model_dir, 'model.ckpt')
     ckpt = torch.load(ckpt_path)
@@ -25,8 +27,14 @@ def test_hessian_simple():
     pc = torch.tensor(pc, dtype=torch.float32)
     enc_pc = positional_encoding(pc).transpose(1, 0).unsqueeze(0)
     enc = model.encoder(enc_pc)
-    print(enc)
-    print(enc.shape)
+    # find the bounding box for all dataset
+    box_min = np.amin(pc, 0) - eps
+    box_max = np.amax(pc, 0) + eps
+
+    grid_sizes = np.ones(3, dtype=np.int32) * 128
+    grid_vertices = np.meshgrid(
+        *[np.linspace(box_min[d], box_max[d], grid_sizes[d]) for d in range(3)])
+    grid_vertices = torch.from_numpy(grid_vertices).float().unsqueeze(0)
 
 
 if __name__ == '__main__':

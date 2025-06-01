@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 import numpy as np
 import gpytorch
+import gpytoolbox
 from gpytoolbox import write_mesh, fd_interpolate
 from skimage.measure import marching_cubes
 
@@ -77,7 +78,7 @@ def test_con():
             with open(grid_log_file, 'w') as fg:
                 fg.write(f"Corners of grid encompassing partial data: {corner, grid_data[0][-1]}!\n")
                 fg.write("Grid range (partial):\n")
-                fg.write(f"x axis: {spacing[0] * (grid_sizes[0] -1)}\n")
+                fg.write(f"x axis: {spacing[0] * (grid_sizes[0] - 1)}\n")
                 fg.write(f"y axis: {spacing[1] * (grid_sizes[1] - 1)}\n")
                 fg.write(f"z axis: {spacing[2] * (grid_sizes[2] - 1)}\n")
                 fg.write(f"Corners of grid encompassing complete data: {corner_c, grid_data_c[0][-1]}!\n")
@@ -157,10 +158,10 @@ def test_con():
                 b = grid_embedding[i * config.gp_batch: (i + 1) * config.gp_batch]
                 cov_pb = cov_fn(test_embedding, b).evaluate_kernel().to_dense()
                 # if (i+1) % 32 == 0:
-                if 1199 <= i <= 1263:
+                '''if 1199 <= i <= 1263:
                     heatmap_pb = sns.heatmap(cov_pb.cpu().numpy(), cbar=False)
                     heatmap8 = heatmap_pb.get_figure()
-                    heatmap8.savefig(os.path.join(pc_dir, f'heatmap_pb{i}.jpg'))
+                    heatmap8.savefig(os.path.join(pc_dir, f'heatmap_pb{i}.jpg'))'''
                 cov_bb = cov_fn(b, b).evaluate_kernel().to_dense()
                 posterior_mean = 1 + cov_pb.T @ cov_inv @ (test_label - 1)
                 posterior_var = cov_bb - cov_pb.T @ cov_inv @ cov_pb
@@ -175,8 +176,10 @@ def test_con():
             # marching cubes
             vertices, faces, normals, values = marching_cubes(np.reshape(shifted_mean, grid_sizes, order='F'),
                                                               level=0.0)
+            var_on_vertices = W @ grid_posterior_var.cpu().numpy()
             # save mesh into .obj file
             write_mesh(os.path.join(pc_dir, 'mean_shifted.obj'), vertices, faces)
+            gpytoolbox.write_ply(os.path.join(pc_dir, 'mean_shifted_with_color.obj'), vertices, faces, var_on_vertices)
 
             # without mean shifting
             vertices_og, faces_og, normals_og, values_og = marching_cubes(
