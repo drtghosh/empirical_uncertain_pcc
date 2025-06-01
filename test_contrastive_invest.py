@@ -153,7 +153,7 @@ def test_con():
             additional_noise = config.noise_variance * torch.eye(test_embedding.size(0)).to(trainer.device)
             cov_with_noise = (cov_pp + additional_noise)
             cov_inv = torch.linalg.inv(cov_with_noise)
-            cov_space_with_noise = (cov_pp_space + additional_noise)
+            cov_space_with_noise = (cov_pp_space + additional_noise.cpu())
             cov_inv_space = torch.linalg.inv(cov_space_with_noise)
             assert grid_embedding.size(
                 0) % config.gp_batch == 0, 'Number of grid points required to be a multiple of batch size'
