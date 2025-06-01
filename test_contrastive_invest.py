@@ -183,11 +183,11 @@ def test_con():
                 cov_pb = cov_fn(test_embedding, b).evaluate_kernel().to_dense()
                 # cov_pb_space = cov_fn_space(trainer.partial_pc[0].transpose(1, 0), bs).evaluate_kernel().to_dense()
                 # if (i+1) % 32 == 0:'''
-                '''if 1199 <= i <= 1263:
-                    heatmap_pb = sns.heatmap(cov_pb.cpu().numpy(), cbar=False)
-                    heatmap8 = heatmap_pb.get_figure()
-                    heatmap8.savefig(os.path.join(pc_dir, f'heatmap_pb{i}.jpg'))'''
-                '''# cov_bb = cov_fn(b, b).evaluate_kernel().to_dense()
+            '''if 1199 <= i <= 1263:
+                heatmap_pb = sns.heatmap(cov_pb.cpu().numpy(), cbar=False)
+                heatmap8 = heatmap_pb.get_figure()
+                heatmap8.savefig(os.path.join(pc_dir, f'heatmap_pb{i}.jpg'))'''
+            '''# cov_bb = cov_fn(b, b).evaluate_kernel().to_dense()
                 # cov_bb_space = cov_fn_space(bs, bs).evaluate_kernel().to_dense()
                 posterior_mean = 1 + cov_pb.T @ cov_inv @ (test_label - 1)
                 # posterior_var = cov_bb - cov_pb.T @ cov_inv @ cov_pb
