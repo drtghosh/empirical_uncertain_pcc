@@ -40,7 +40,7 @@ def test_hessian_simple():
     grid_vertices = torch.tensor(grid_vertices, dtype=torch.float32)
     # multi_z = z.unsqueeze(1).repeat(1, len(grid_vertices), 1)
     # multi_noise = noise.unsqueeze(1).repeat(1, len(grid_vertices), 1).to(config.device)
-    grid_vertices = grid_vertices.unsqueeze(0)
+    grid_vertices = grid_vertices.unsqueeze(0).to(config.device)
     for j in range(grid_vertices.size(1)):
         pred = model.decoder(torch.cat([grid_vertices[:, j, :], z.unsqueeze(1), noise.unsqueeze(1)], dim=-1)).squeeze(
             -1)
