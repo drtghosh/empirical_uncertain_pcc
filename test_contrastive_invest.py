@@ -67,10 +67,8 @@ def test_con():
             # create array of grid sizes
             grid_sizes = np.ones(config.space_dim, dtype=np.int32) * config.grid_size
             # find the bounding box for all dataset
-            if box_min is None:
-                box_min = torch.amin(test_data, 1)[0] - 0.2
-            if box_max is None:
-                box_max = torch.amax(test_data, 1)[0] + 0.2
+            box_min = torch.amin(test_data, 1)[0] - 0.2
+            box_max = torch.amax(test_data, 1)[0] + 0.2
             # compute the grid spacing
             grid_spacing = (box_max - box_min) / (config.grid_size - 1)
 
