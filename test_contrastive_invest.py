@@ -80,7 +80,6 @@ def test_con():
             grid_data, grid_sizes, corner, spacing = create_grid(trainer.partial_pc.transpose(1, 2), config.grid_size,
                                                 trainer.partial_pc.size(1))
             grid_data = grid_data.to(trainer.device)
-            print(grid_data.shape)
             # create a grid around complete data
             grid_data_c, grid_sizes_c, corner_c, spacing_c = create_grid(trainer.complete_pc.transpose(1, 2),
                                                                          config.grid_size, trainer.complete_pc.size(1))
@@ -205,8 +204,7 @@ def test_con():
                                                               level=0.0)
             # W2 = fd_interpolate(vertices, grid_sizes, spacing, corner)
             # var_on_vertices = W2 @ grid_posterior_var.cpu().numpy()
-            print(grid_posterior_var.cpu().numpy().reshape((grid_sizes[0], grid_sizes[1], grid_sizes[2])).shape)
-            print(grid_posterior_var)
+            print(grid_vertices)
             interp = RegularGridInterpolator(grid_vertices, grid_posterior_var.cpu().numpy().reshape(
                 (grid_sizes[0], grid_sizes[1], grid_sizes[2])))
             var_on_vertices = interp(vertices)
