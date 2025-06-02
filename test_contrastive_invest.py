@@ -205,6 +205,8 @@ def test_con():
                                                               level=0.0)
             # W2 = fd_interpolate(vertices, grid_sizes, spacing, corner)
             # var_on_vertices = W2 @ grid_posterior_var.cpu().numpy()
+            print(grid_posterior_var.cpu().numpy().reshape((grid_sizes[0], grid_sizes[1], grid_sizes[2])).shape)
+            print(grid_posterior_var)
             interp = RegularGridInterpolator(grid_vertices, grid_posterior_var.cpu().numpy().reshape(
                 (grid_sizes[0], grid_sizes[1], grid_sizes[2])))
             var_on_vertices = interp(vertices)
