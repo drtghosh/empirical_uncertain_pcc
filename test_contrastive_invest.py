@@ -73,9 +73,9 @@ def test_con():
             grid_spacing = (box_max - box_min) / (config.grid_size - 1)
 
             # Build a grid (dimension-agnostic)
-            grid_vertices = np.meshgrid(
-                *[np.linspace(box_min[d], box_max[d], grid_sizes[d]) for d in range(config.space_dim)])
-            grid_vertices = np.stack(grid_vertices, axis=-1).reshape(-1, config.space_dim)
+            x = np.linspace(box_min[0], box_max[0], grid_sizes[0])
+            y = np.linspace(box_min[1], box_max[1], grid_sizes[1])
+            z = np.linspace(box_min[2], box_max[2], grid_sizes[2])
 
             # create a grid around partial data
             grid_data, grid_sizes, corner, spacing = create_grid(trainer.partial_pc.transpose(1, 2), config.grid_size,
@@ -205,8 +205,7 @@ def test_con():
                                                               level=0.0)
             # W2 = fd_interpolate(vertices, grid_sizes, spacing, corner)
             # var_on_vertices = W2 @ grid_posterior_var.cpu().numpy()
-            print(grid_vertices.shape)
-            interp = RegularGridInterpolator(grid_vertices, grid_posterior_var.cpu().numpy().reshape(
+            interp = RegularGridInterpolator((x, y, z), grid_posterior_var.cpu().numpy().reshape(
                 (grid_sizes[0], grid_sizes[1], grid_sizes[2])))
             var_on_vertices = interp(vertices)
             print(var_on_vertices)
