@@ -67,6 +67,7 @@ def test_con():
             grid_data, grid_sizes, corner, spacing = create_grid(trainer.partial_pc.transpose(1, 2), config.grid_size,
                                                 trainer.partial_pc.size(1))
             grid_data = grid_data.to(trainer.device)
+            print(grid_data.shape)
             # create a grid around complete data
             grid_data_c, grid_sizes_c, corner_c, spacing_c = create_grid(trainer.complete_pc.transpose(1, 2),
                                                                          config.grid_size, trainer.complete_pc.size(1))
