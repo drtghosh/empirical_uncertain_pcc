@@ -191,8 +191,8 @@ def test_con():
                                                               level=0.0)
             # W2 = fd_interpolate(vertices, grid_sizes, spacing, corner)
             # var_on_vertices = W2 @ grid_posterior_var.cpu().numpy()
-            interp = RegularGridInterpolator(grid_data.reshape((grid_sizes[0], grid_sizes[1], grid_sizes[2], 3)),
-                                             grid_posterior_var.reshape((grid_sizes[0], grid_sizes[1], grid_sizes[2])))
+            interp = RegularGridInterpolator(grid_data.cpu().numpy().reshape((grid_sizes[0], grid_sizes[1], grid_sizes[2], 3)),
+                                             grid_posterior_var.cpu().numpy().reshape((grid_sizes[0], grid_sizes[1], grid_sizes[2])))
             var_on_vertices = interp(vertices)
             print(var_on_vertices)
             # save mesh into .obj file
