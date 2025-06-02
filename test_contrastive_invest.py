@@ -62,6 +62,21 @@ def test_con():
             # save the complete point cloud to results
             write_point_cloud_ply(trainer.complete_pc[0].transpose(1, 0).cpu().numpy(),
                                   os.path.join(pc_dir, 'complete.ply'))
+            # send data to cpu
+            test_data = trainer.partial_pc.transpose(1, 2).cpu()
+            # create array of grid sizes
+            grid_sizes = np.ones(config.space_dim, dtype=np.int32) * config.grid_size
+            # find the bounding box for all dataset
+            if box_min is None:
+                box_min = torch.amin(test_data, 1)[0] - 0.2
+            if box_max is None:
+                box_max = torch.amax(test_data, 1)[0] + 0.2
+            # compute the grid spacing
+            grid_spacing = (box_max - box_min) / (config.grid_size - 1)
+
+            # Build a grid (dimension-agnostic)
+            grid_vertices = np.meshgrid(
+                *[np.linspace(box_min[d], box_max[d], grid_sizes[d]) for d in range(config.space_dim)])
 
             # create a grid around partial data
             grid_data, grid_sizes, corner, spacing = create_grid(trainer.partial_pc.transpose(1, 2), config.grid_size,
@@ -192,8 +207,8 @@ def test_con():
                                                               level=0.0)
             # W2 = fd_interpolate(vertices, grid_sizes, spacing, corner)
             # var_on_vertices = W2 @ grid_posterior_var.cpu().numpy()
-            interp = RegularGridInterpolator(grid_data[0].cpu().numpy().reshape((grid_sizes[0], grid_sizes[1], grid_sizes[2], 3)),
-                                             grid_posterior_var.cpu().numpy().reshape((grid_sizes[0], grid_sizes[1], grid_sizes[2])))
+            interp = RegularGridInterpolator(grid_vertices, grid_posterior_var.cpu().numpy().reshape(
+                (grid_sizes[0], grid_sizes[1], grid_sizes[2])))
             var_on_vertices = interp(vertices)
             print(var_on_vertices)
             # save mesh into .obj file
