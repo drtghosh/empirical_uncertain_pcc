@@ -343,8 +343,8 @@ id_dict = {
     "table": "04379243",
     "vessel": "04530566",  # boat
 }
-# save_negative_complete_pcn_parallel('data/PCN', 'train', 'table', id_dict, False, True, 12)
-# save_negative_complete_pcn_parallel('data/PCN', 'validation', 'table', id_dict, False, True)
+# save_negative_complete_pcn_parallel('data/PCN', 'train', 'airplane', id_dict, False, True, 12)
+# save_negative_complete_pcn_parallel('data/PCN', 'validation', 'airplane', id_dict, False, True, 12)
 
 
 def create_grid(test_data, grid_size, space_dim=3, box_min=None, box_max=None, eps=0.2):
