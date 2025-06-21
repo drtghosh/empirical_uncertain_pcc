@@ -14,12 +14,15 @@ from metrics import ldf
 from metrics.EMD import emd
 
 import seaborn as sns
+import pickle
 
 
 def plot_tensor(tensor, x_label=None, save_dir=None, filename=None):
 	pt = sns.displot(tensor.cpu().numpy(), stat='percent', kde=True, kind='hist', element="step", bins=30)
 	pt.set(xlabel=x_label)
 	pt.figure.savefig(os.path.join(save_dir, filename + '.png'), bbox_inches="tight")
+	with open(os.path.join(save_dir, filename), 'wb') as f:
+		pickle.dump(tensor.cpu().numpy(), f)
 
 
 def test_imle_gen_metrics():
