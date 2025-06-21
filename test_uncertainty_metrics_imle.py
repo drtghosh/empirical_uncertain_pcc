@@ -18,6 +18,8 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 from matplotlib.ticker import PercentFormatter
 
+import pickle
+
 
 def plot_distances(distances, n_bins=20, save_dir=None, filename=None):
 	fig, axs = plt.subplots(1, 1, tight_layout=True)
@@ -36,6 +38,9 @@ def plot_distances(distances, n_bins=20, save_dir=None, filename=None):
 		thispatch.set_facecolor(color)
 	axs.yaxis.set_major_formatter(PercentFormatter(xmax=1))
 	plt.savefig(os.path.join(save_dir, filename + '.png'))
+
+	with open(os.path.join(save_dir, filename), 'wb') as f:
+		pickle.dump(distances, f)
 
 
 def plot_deviations(deviations, n_bins=20, save_dir=None, filename=None):
@@ -56,11 +61,16 @@ def plot_deviations(deviations, n_bins=20, save_dir=None, filename=None):
 	axs.yaxis.set_major_formatter(PercentFormatter(xmax=1))
 	plt.savefig(os.path.join(save_dir, filename + '.png'))
 
+	with open(os.path.join(save_dir, filename), 'wb') as f:
+		pickle.dump(deviations, f)
+
 
 def plot_tensor(tensor, x_label=None, save_dir=None, filename=None):
 	pt = sns.displot(tensor.cpu().numpy(), stat='percent', kde=True, kind='hist', element="step", bins=30)
 	pt.set(xlabel=x_label)
 	pt.figure.savefig(os.path.join(save_dir, filename + '.png'), bbox_inches="tight")
+	with open(os.path.join(save_dir, filename), 'wb') as f:
+		pickle.dump(tensor.cpu().numpy(), f)
 
 
 def test_imle_gen_metrics():
