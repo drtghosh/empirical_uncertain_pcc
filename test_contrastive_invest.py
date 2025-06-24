@@ -17,7 +17,6 @@ import seaborn as sns
 from scipy.interpolate import RegularGridInterpolator
 
 
-
 def test_con():
     # create experiment config containing all hyperparameters
     config = get_config('test')
@@ -203,9 +202,9 @@ def test_con():
             # marching cubes
             vertices, faces, normals, values = marching_cubes(np.reshape(shifted_mean, grid_sizes, order='F'),
                                                               level=0.0)
-
+            # vertices = vertices / (grid_sizes-1)
             print(grid_posterior_var)
-            W2 = fd_interpolate(vertices, grid_sizes, spacing, corner)
+            W2 = fd_interpolate(vertices, grid_sizes, (1, 1, 1), (0, 0, 0))
             var_on_vertices = W2 @ grid_posterior_var.cpu().numpy()
             # interp = RegularGridInterpolator((x, y, z), grid_posterior_var.cpu().numpy().reshape(
             #    (grid_sizes[0], grid_sizes[1], grid_sizes[2])))
